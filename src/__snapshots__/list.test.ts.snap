@@ -1,0 +1,85 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Unordered List 1`] = `
+{
+  "blocks": [
+    {
+      "items": [
+        {
+          "content": [
+            {
+              "content": "Item 1 ",
+              "type": "PlainText",
+            },
+            {
+              "content": {
+                "content": [
+                  {
+                    "content": "bold",
+                    "type": "PlainText",
+                  },
+                ],
+                "type": "ConstrainedBold",
+              },
+              "type": "UnconstrainedBold",
+            },
+          ],
+          "type": "UnorderedListItem",
+        },
+      ],
+      "type": "UnorderedList",
+    },
+    {
+      "items": [
+        {
+          "content": [
+            {
+              "content": "Item 2 ",
+              "type": "PlainText",
+            },
+            {
+              "content": [
+                {
+                  "content": "italic",
+                  "type": "PlainText",
+                },
+              ],
+              "type": "UnconstrainedItalic",
+            },
+          ],
+          "type": "UnorderedListItem",
+        },
+      ],
+      "type": "UnorderedList",
+    },
+    {
+      "items": [
+        {
+          "content": [
+            {
+              "content": "Item 3 ",
+              "type": "PlainText",
+            },
+            {
+              "attributes": [
+                "fooish",
+                {
+                  "name": "aria-role",
+                  "type": "AttributeEntry",
+                  "value": "quz",
+                },
+              ],
+              "scheme": "https",
+              "type": "UrlMacro",
+              "url": "https://foo.org",
+            },
+          ],
+          "type": "UnorderedListItem",
+        },
+      ],
+      "type": "UnorderedList",
+    },
+  ],
+  "type": "Document",
+}
+`;

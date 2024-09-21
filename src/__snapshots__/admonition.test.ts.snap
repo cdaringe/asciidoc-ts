@@ -1,0 +1,14 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Admonition - basic 1`] = `
+{
+  "blocks": [
+    {
+      "admonitionType": "NOTE:",
+      "content": "This is an admonition.",
+      "type": "Admonition",
+    },
+  ],
+  "type": "Document",
+}
+`;

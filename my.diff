@@ -1,0 +1,92 @@
+--- src/mod.ts
++++ src/mod.ts
+semantics.addOperation("toAST", {
+  Document(blocks, _) {
+    return {
+      type: "Document",
+-     blocks: blocks.toAST(),
++     blocks: blocks.children.map(child => child.toAST()).filter(block => block !== null),
+    };
+  },
+  Block(block) {
+    return block.toAST();
+  },
++ Paragraph(firstLine, restLines, _) {
++   const content = [firstLine].concat(restLines.children).map(line => line.sourceString).join('\n').trim();
++   return {
++     type: "Paragraph",
++     content: content,
++   };
++ },
+- Paragraph(content, _) {
+-   return {
+-     type: "Paragraph",
+-     content: content.sourceString.trim(),
+-   };
+- },
+  UnorderedList(items) {
+    return {
+      type: "UnorderedList",
+      items: items.toAST(),
+    };
+  },
+  UnorderedListItem(marker, _, content, continuation) {
+    return {
+      type: "UnorderedListItem",
+-     content: content.sourceString.trim() + continuation.sourceString,
++     content: content.toAST().concat(continuation.toAST()).map(elem => elem.content).join(''),
+    };
+  },
+  OrderedList(items) {
+    return {
+      type: "OrderedList",
+      items: items.toAST(),
+    };
+  },
+  OrderedListItem(number, _, __, content, continuation) {
+    return {
+      type: "OrderedListItem",
+      number: parseInt(number.sourceString),
+-     content: content.sourceString.trim() + continuation.sourceString,
++     content: content.toAST().concat(continuation.toAST()).map(elem => elem.content).join(''),
+    };
+  },
++ Table(_, __, attrs, ___, rows, ____, _____, ______) {
++   return {
++     type: "Table",
++     attributes: attrs.sourceString || null,
++     rows: rows.children.map(row => row.toAST()),
++   };
++ },
+- Table(_, __, attrs, ___, rows, ____, _____, ______) {
+-   return {
+-     type: "Table",
+-     attributes: attrs.sourceString || null,
+-     rows: rows.toAST(),
+-   };
+- },
+  TableRow(_, __, cell, moreCells, ___, ____, _____, ______) {
+    return {
+      type: "TableRow",
+-     cells: [cell.toAST()].concat(moreCells.toAST()),
++     cells: [cell.toAST()].concat(moreCells.children.map(c => c.children[2].toAST())),
+    };
+  },
+  TableCell(content) {
+    return {
+      type: "TableCell",
+-     content: content.sourceString.trim(),
++     content: content.children.map(child => child.toAST()).map(elem => elem.content).join(''),
+    };
+  },
++ MacroBlock(name, _, __, target, attrs, ___, content, ____, _____, ______) {
++   return {
++     type: "MacroBlock",
++     name: name.sourceString,
++     target: target.sourceString || null,
++     attributes: attrs.sourceString || null,
++     content: content ? content.sourceString.trim() : "",
++   };
++ },
+  // ... (keep other methods unchanged)
+});

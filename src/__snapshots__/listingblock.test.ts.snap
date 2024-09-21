@@ -1,0 +1,53 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CodeBlock 1`] = `
+{
+  "blocks": [
+    {
+      "attributes": [
+        "source",
+        "js",
+      ],
+      "content": "foo();",
+      "type": "CodeBlock",
+    },
+  ],
+  "type": "Document",
+}
+`;
+
+exports[`ListingBlock - delimited 1`] = `
+{
+  "blocks": [
+    {
+      "attributes": [
+        "foo",
+        "bar",
+      ],
+      "content": "newlines are
+
+
+ok",
+      "delimited": true,
+      "type": "ListingBlock",
+    },
+  ],
+  "type": "Document",
+}
+`;
+
+exports[`ListingBlock 1`] = `
+{
+  "blocks": [
+    {
+      "attributes": [
+        "foo",
+        "bar",
+      ],
+      "content": "baz",
+      "type": "ListingBlock",
+    },
+  ],
+  "type": "Document",
+}
+`;

@@ -1,0 +1,23 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Parse URL Macro 1`] = `
+{
+  "blocks": [
+    {
+      "content": [
+        {
+          "attributes": [
+            "foo",
+            "bar",
+          ],
+          "scheme": "https",
+          "type": "UrlMacro",
+          "url": "https://example.com",
+        },
+      ],
+      "type": "Paragraph",
+    },
+  ],
+  "type": "Document",
+}
+`;

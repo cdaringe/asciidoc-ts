@@ -1,0 +1,40 @@
+{
+  "name": "asciidoc",
+  "version": "0.0.0",
+  "description": "asciidoc tooling for javascript",
+  "main": "dist/mod.js",
+  "type": "module",
+  "foo": "bar",
+  "scripts": {
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/cdaringe/asciidoc-ts.git"
+  },
+  "keywords": [
+    "asciidoc",
+    "markdown",
+    "parser",
+    "printer",
+    "serialize",
+    "deserialize",
+    "markup"
+  ],
+  "author": "cdaringe",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cdaringe/asciidoc-ts/issues"
+  },
+  "homepage": "https://github.com/cdaringe/asciidoc-ts#readme",
+  "dependencies": {
+    "chevrotain": "^11.0.3",
+    "ohm-js": "^17.1.0"
+  },
+  "devDependencies": {
+    "ts-node": "10.9.2",
+    "tsx": "4.19.1",
+    "typescript": "5.6.2",
+    "vitest": "2.1.1"
+  }
+}
