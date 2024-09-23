@@ -1,221 +1,11 @@
 import { grammar as ohmGrammar } from "ohm-js";
 import { getEnvVar } from "./env.js";
+import fs from 'node:fs';
+import path from 'node:path';
 
-/**
- * Help for generating the grammar from claude.ai
- * @see {@link https://claude.ai/chat/73a7f6fc-66e7-4904-ab7e-d08c0343005e}
- */
+const grammarFilename = path.resolve(__dirname, 'grammar.ohm');
 
-const grammarString = String.raw`
-AsciiDoc {
-  Document = Block* EndOfFile
-
-  AttributeList = "[" listOf<Attribute, ","> "]"
-  Attribute = AttributeNamed | AttributePositional
-  AttributePositional = (~"]" ~"," any)+
-  AttributeNamed = AttributePositional "=" AttributePositional
-
-  Block = BlockMetaData? BlockKind newline? newline?
-  BlockMetaData = block_title? AttributeList newline
-  block_title = "." ~space (~newline any)* newline
-  BlockKind = Header
-  | HeaderSetext
-  | List
-  | Table
-  | BlockQuote
-  | HorizontalRule
-  | Admonition
-  | Sidebar
-  | PassthroughBlock
-  | MacroBlock
-  | CommentBlock
-  | ListingBlock
-  | Paragraph
-  | InlineElementOrPlainText
-  | BlankLine
-  | newline
-
-  LineElementStart = "="
-
-  inlineelstart =
-      | "*"  // constrained bold
-      | "**"  // unconstrained Bold
-      | "_"  // constrained Italics
-      | "__"  // Unconstrained Italics
-      | "//"  // Italic
-      | "${"`"}"   // Monospace
-      | "<<"  // Cross-reference start
-      | "link:"  // Link start
-      | "image:"  // Image start
-      | "footnote:"  // Footnote start
-      | "+++"  // Inline passthrough start
-      | "~"   // Subscript start
-      | "^"   // Superscript start
-      | "{"   // Attribute reference start
-
-  EndOfFile = newline? end  // Allow optional newline at end of file
-  SingleLineText = InlineElement+ newline?
-
-  HeaderSetext = HeaderTextSetext HeaderUnderlineSetext BlankLine*
-  HeaderTextSetext = line
-  HeaderUnderlineSetext = (("=" | "-")+ newline) | (("=" | "-")+ end)
-
-
-  Header = HeaderMarker HeaderContent newline?
-  HeaderMarker =
-  | "======"
-  | "====="
-  | "===="
-  | "==="
-  | "=="
-  | "="
-  HeaderContent = (~newline InlineElementOrPlainText)+
-
-  Paragraph = (~LineElementStart) ParagraphSegment
-  ParagraphSegment = InlineElementOrPlainText+ (BlankLine ParagraphSegment)?
-
-  List = UnorderedList
-       | OrderedList
-       | DescriptionList
-
-  UnorderedList = UnorderedListItem+
-  UnorderedListItem = unordered_list_marker ListItemContent newline?
-  ListItemContent = InlineElementOrPlainText+ (ListContinuation ListItemContent+)*
-  unordered_list_marker = ("*" | "-" | "•")+ space+
-
-  OrderedList = OrderedListItem+
-  OrderedListItem = OLMarker ListItemContent newline?
-  ol_marker_dot = ". "
-  OLMarkerDigits = Digits ol_marker_dot
-  OLMarker = OLMarkerDigits | ol_marker_dot
-
-  DescriptionList = DescriptionListItem+
-  DescriptionListItem = Term "::" DescriptionContent
-
-  ListContinuation = "+" newline ListItemContent
-
-  Term = (~"::" any)+
-  DescriptionContent = line+
-
-  ListingBlock =
-    | ListingBlockDelimited
-
-  listingblockdelimiter = "----"
-
-  ListingBlockDelimited = listingblockdelimiter newline (~listingblockdelimiter any)* listingblockdelimiter newline?
-
-  BlockQuote = BlockQuoteDelimiter newline
-               (line | BlankLine)*
-               BlockQuoteDelimiter newline
-  BlockQuoteDelimiter = "____"
-
-  Table = TableDelimiter TableAttributes? newline
-          TableRow+
-          TableDelimiter newline
-  TableDelimiter = "|==="
-  TableAttributes = "[" listOf<TableAttribute, ","> "]"
-  TableAttribute = ColsAttribute | HeaderOption
-  ColsAttribute = "cols" "=" Digits
-  HeaderOption = "header"
-  TableRow = "|" TableCell ("|" TableCell)* newline
-  TableCell = InlineElement+
-
-  HorizontalRule = "'''" newline
-
-  Admonition = AdmonitionType admonitionContent+
-  admonitionContent = (~newline any)+
-  AdmonitionType = "NOTE:" | "TIP:" | "IMPORTANT:" | "WARNING:" | "CAUTION:"
-
-  Sidebar = SidebarDelimiter newline
-            (line | BlankLine)*
-            SidebarDelimiter newline
-  SidebarDelimiter = "****"
-
-  PassthroughBlock = PassthroughDelimiter newline
-                     (line | BlankLine)*
-                     PassthroughDelimiter newline
-  PassthroughDelimiter = "++++"
-
-  MacroBlock = MacroName "::" MacroTarget? AttributeList? newline
-               (line | BlankLine)*
-               MacroDelimiter newline
-  MacroName = letter+
-  MacroTarget = (~"[" any)+
-
-  MacroDelimiter = "----"
-
-  AttributeEntry = ":" AttributeName ":" AttributeValue? newline
-  AttributeName = (~":" any)+
-  AttributeValue = (~InlineElement any)*
-
-  CommentBlock = CommentDelimiter newline
-                 (line | BlankLine)*
-                 CommentDelimiter newline
-  CommentDelimiter = "////"
-
-  InlineElement =
-    | AttributeReference
-    | ConstrainedBold
-    | ConstrainedItalic
-    | CrossReference
-    | Footnote
-    | InlineImage
-    | InlinePassthrough
-    | Link
-    | MonospaceText
-    | SubscriptText
-    | SuperscriptText
-    | UnconstrainedBold
-    | UnconstrainedItalic
-    | UrlMacro
-
-  InlineElementOrPlainText = InlineElement | plaintext
-
-  plaintext = (~inlineelstart ~newline ~httpscheme any)+
-
-  ConstrainedBold = "*" (~"*" InlineElementOrPlainText)+ "*"
-  UnconstrainedBold = "*" ConstrainedBold "*"
-
-  UnconstrainedItalic = "_" (~"_" InlineElementOrPlainText)+ "_"
-  ConstrainedItalic = "_" UnconstrainedItalic "_"
-
-  MonospaceText = "${"`"}" (~"${"`"}" any)+ "${"`"}"
-  httpscheme = "https" | "http"
-  UrlMacroScheme = httpscheme | "ftp" | "irc" | "mailto"
-  UrlMacro = UrlMacroScheme ":" (~"[" any)+ AttributeList
-
-  Link = "link:" Url "[" LinkText "]"
-  Url = (~"[" any)+
-  LinkText = (~"]" any)*
-
-  InlineImage = "image:" Url "[" ImageAlt "]"
-  ImageAlt = (~"]" any)*
-
-  Footnote = "footnote:" FootnoteId? "[" FootnoteText "]"
-  FootnoteId = Digits
-  FootnoteText = (~"]" any)*
-
-  CrossReference = "<<" CrossReferenceId "," CrossReferenceText? ">>"
-  CrossReferenceId = (~"," ~">>" any)+
-  CrossReferenceText = (~">>" any)*
-
-  InlinePassthrough = "+++" (~"+++" any)+ "+++"
-
-  SubscriptText = "~" (~"~" any)+ "~"
-  SuperscriptText = "^" (~"^" any)+ "^"
-
-  AttributeReference = "{" AttributeName "}"
-
-  line = (~newline any)+ newline
-  BlankLine = space* newline
-
-  Digits = digit+
-
-  newline = "\n" | "\r" | "\r\n"
-  space := " " --space
-    | "\t" --tab
-}
-`;
+export const grammarString = fs.readFileSync(grammarFilename, 'utf8');
 export const grammar = ohmGrammar(grammarString);
 
 // Define types for AST nodes
@@ -229,8 +19,15 @@ interface Document {
   blocks: Block[];
 }
 
+interface BlockAnchor {
+  type: "BlockAnchor";
+  id: string;
+  reftext?: string;
+}
+
 interface BaseBlock {
   metadata?: BlockMetaData;
+  anchor?: BlockAnchor;
 }
 
 /**
@@ -327,7 +124,9 @@ interface ListingBlock extends BaseBlock {
 
 interface CodeBlock extends BaseBlock {
   type: "CodeBlock";
-  attributes: [kind: "source", /* language, ...rest */ ...rest: string[]];
+  metadata: {
+    attributes: [AttributeEntry<"source">, ...AttributeEntry[]];
+  }
   content: string;
 }
 
@@ -375,14 +174,14 @@ interface PassthroughBlock extends BaseBlock {
 interface MacroBlock extends BaseBlock {
   type: "MacroBlock";
   name: string;
-  target: string | null;
-  attributes: string | null;
+  target?: string;
+  attributes?: string;
   content: string;
 }
 
-interface AttributeEntry {
+interface AttributeEntry<Name extends string = string> {
   type: "AttributeEntry";
-  name: string;
+  name: Name;
   value?: string;
 }
 
@@ -452,10 +251,18 @@ interface Link {
   text: string;
 }
 
-interface InlineImage {
-  type: "InlineImage";
+interface ImageCommon {
   url: string;
   alt: string;
+  width?: number;
+  height?: number;
+}
+interface InlineImage extends ImageCommon {
+  type: "InlineImage";
+}
+
+interface BlockImage extends ImageCommon {
+  type: "BlockImage";
 }
 
 interface Footnote {
@@ -505,7 +312,19 @@ export const toAST = (input: string): Document => {
       return {
         ...(title.length ? { title } : undefined),
         attributes: attributes.toAST(),
-      } as BlockMetaData;
+      } satisfies BlockMetaData;
+    },
+    BlockAnchor(_open, id, reftextNode, _close, _nl) {
+      // "[[" anchorId anchorReftext?  "]]" newline
+      const reftext = reftextNode.toAST();
+      return {
+        type: "BlockAnchor",
+        id: id.sourceString,
+        ...(reftext.length ? { reftext } : undefined),
+      } satisfies BlockAnchor;
+    },
+    anchorReftext(_comma, text) {
+      return text.sourceString;
     },
     Document(blocks, _) {
       const astBlocks = (blocks.toAST() as Block[]).filter((it) => {
@@ -520,16 +339,16 @@ export const toAST = (input: string): Document => {
       return {
         type: "Document",
         blocks: astBlocks,
-      } as Document;
+      } satisfies Document;
     },
-    Block(metadata, blockKind, _nl1, _nl2) {
+    Block(anchor,metadata, blockKind, _nl1, _nl2) {
       const [metadataAst] = metadata.toAST() ?? [];
+      const [anchorAst] = anchor.toAST() ?? [];
       const nextBlock = {
         ...blockKind.toAST(),
-        ...(metadataAst
-          ? { metadata: metadataAst }
-          : undefined),
-      } as Block;
+        ...truthyValuesOrEmptyPojo({ metadata: metadataAst }),
+        ...truthyValuesOrEmptyPojo({ anchor: anchorAst }),
+      } satisfies Block;
       if (nextBlock.type === 'Paragraph' && nextBlock.metadata?.attributes?.find(it => it.name === 'listing')) {
         (nextBlock as Block).type = 'ListingBlock';
       }
@@ -543,14 +362,14 @@ export const toAST = (input: string): Document => {
         type: "HeaderSetext",
         level: underline.sourceString[0] === "=" ? 1 : 2,
         content: text.sourceString.trim(),
-      } as HeaderSetextBlock;
+      } satisfies HeaderSetextBlock;
     },
     Header(marker, content, _maybeNewline) {
       return {
         type: "Header",
         level: marker.sourceString.length as 1 | 2 | 3 | 4 | 5 | 6,
         content: content.toAST(),
-      } as HeaderBlock;
+      } satisfies HeaderBlock;
     },
     Paragraph(content) {
       const flattenParagraphSegments = (
@@ -565,7 +384,7 @@ export const toAST = (input: string): Document => {
       return {
         type: "Paragraph",
         content: flattenParagraphSegments(content.toAST() as ParagraphSegment),
-      } as ParagraphBlock;
+      } satisfies ParagraphBlock;
     },
     ParagraphSegment(content, _bl, continuation) {
       // ParagraphSegment = InlineElementOrPlainText+ (BlankLine ParagraphSegment)?
@@ -573,82 +392,82 @@ export const toAST = (input: string): Document => {
       return {
         type: "ParagraphSegment",
         content: children,
-      } as ParagraphSegment;
+      } satisfies ParagraphSegment;
     },
     UnorderedList(items) {
       return {
         type: "UnorderedList",
         items: normalizeDepth(items.toAST() as UnorderedListItem[]),
-      } as UnorderedListBlock;
+      } satisfies UnorderedListBlock;
     },
     UnorderedListItem(marker, content, _nl) {
       return {
         type: "UnorderedListItem",
         depth: marker.sourceString.length,
         content: content.toAST(),
-      } as UnorderedListItem;
+      } satisfies UnorderedListItem;
     },
     OrderedList(items) {
       return {
         type: "OrderedList",
         items: normalizeDepth(items.toAST() as OrderedListItem[]),
-      } as OrderedListBlock;
+      } satisfies OrderedListBlock;
     },
     OrderedListItem(marker, content, _nl) {
       return {
         type: "OrderedListItem",
         depth: marker.sourceString.length,
         content: content.toAST(),
-      } as OrderedListItem;
+      } satisfies OrderedListItem;
     },
     DescriptionList(items) {
       return {
         type: "DescriptionList",
         items: items.toAST(),
-      } as DescriptionListBlock;
+      } satisfies DescriptionListBlock;
     },
     DescriptionListItem(term, _, content) {
       return {
         type: "DescriptionListItem",
         term: term.sourceString.trim(),
         description: content.toAST(),
-      } as DescriptionListItem;
+      } satisfies DescriptionListItem;
     },
     ListingBlockDelimited(_d1, _nl1, content, _d2, _newline2) {
       return {
         type: "ListingBlock",
         content: content.sourceString.trim(),
         delimited: true,
-      } as ListingBlock;
+      } satisfies ListingBlock;
     },
     BlockQuote(_open, _newline, content, _close, _newline2) {
       return {
         type: "BlockQuote",
         content: content.toAST(),
-      } as BlockQuoteBlock;
+      } satisfies BlockQuoteBlock;
     },
     Table(_open, attrs, _newline, rows, _close, _newline2) {
       return {
         type: "Table",
         attributes: attrs.sourceString || null,
         rows: rows.children.map((row) => row.toAST()),
-      } as TableBlock;
+      } satisfies TableBlock;
     },
     TableRow(_marker, cells, _markers, _newline, _hmmwrong) {
       debugger; // eslint-disable-line
       return {
         type: "TableRow",
         cells: cells.children.map((cell) => cell.toAST()),
-      } as TableRow;
+      } satisfies TableRow;
     },
     TableCell(content) {
       return {
         type: "TableCell",
         content: content.toAST(),
-      } as TableCell;
+      } satisfies TableCell;
     },
     HorizontalRule(_rule, _newline) {
-      return { type: "HorizontalRule" } as HorizontalRuleBlock;
+      return { type: "HorizontalRule" } satisfies HorizontalRuleBlock;
     },
     Admonition(type, content) {
       return {
@@ -660,63 +479,63 @@ export const toAST = (input: string): Document => {
           | "WARNING"
           | "CAUTION",
         content: content.toAST(),
-      } as AdmonitionBlock;
+      } satisfies AdmonitionBlock;
     },
     Sidebar(_open, _newline, content, _close, _newline2) {
       return {
         type: "Sidebar",
         content: content.toAST(),
-      } as SidebarBlock;
+      } satisfies SidebarBlock;
     },
     PassthroughBlock(_open, _newline, content, _close, _newline2) {
       return {
         type: "PassthroughBlock",
         content: content.sourceString,
-      } as PassthroughBlock;
+      } satisfies PassthroughBlock;
     },
     MacroBlock(name, _, target, attrs, _newline, content, _close, _newline2) {
       return {
         type: "MacroBlock",
         name: name.sourceString,
-        target: target.sourceString || null,
-        attributes: attrs.sourceString || null,
         content: content.sourceString,
-      } as MacroBlock;
+        ...truthyValuesOrEmptyPojo({ target: target.sourceString }),
+        ...truthyValuesOrEmptyPojo({ attributes: attrs.sourceString }),
+      } satisfies MacroBlock;
     },
     AttributeEntry(_, name, __, value, _newline) {
       return {
         type: "AttributeEntry",
         name: name.sourceString,
-        value: value.sourceString.trim() || null,
-      } as AttributeEntry;
+        ...truthyValuesOrEmptyPojo({ value: value.sourceString.trim() }),
+      } satisfies AttributeEntry;
     },
     AttributePositional(content) {
       return {
         type: "AttributeEntry",
         name: content.sourceString,
-      } as AttributeEntry;
+      } satisfies AttributeEntry;
     },
     AttributeNamed(key, _eq, value) {
       return {
         type: "AttributeEntry",
         name: key.toAST(),
         value: value ? value.sourceString : undefined,
-      } as AttributeEntry;
+      } satisfies AttributeEntry;
     },
     CommentBlock(_open, _newline, content, _close, _newline2) {
       return {
         type: "CommentBlock",
         content: content.sourceString,
-      } as CommentBlock;
+      } satisfies CommentBlock;
     },
     SingleLineText(content, _newline) {
       return {
         type: "SingleLineText",
         content: content.toAST(),
-      } as SingleLineText;
+      } satisfies SingleLineText;
     },
     BlankLine(_spaces, _newline) {
-      return { type: "BlankLine" } as BlankLine;
+      return { type: "BlankLine" } satisfies BlankLine;
     },
     InlineElement(element) {
       return element.toAST();
@@ -725,89 +544,111 @@ export const toAST = (input: string): Document => {
       return {
         type: "PlainText",
         content: content.sourceString,
-      } as PlainText;
+      } satisfies PlainText;
     },
     ConstrainedBold(_, content, __) {
       return {
         type: "ConstrainedBold",
         content: content.toAST(),
-      } as ConstrainedBold;
+      } satisfies ConstrainedBold;
     },
     UnconstrainedBold(_, content, __) {
       return {
         type: "UnconstrainedBold",
         content: content.toAST(),
-      } as UnconstrainedBold;
+      } satisfies UnconstrainedBold;
     },
     UnconstrainedItalic(_, content, __) {
       return {
         type: "UnconstrainedItalic",
         content: content.toAST(),
-      } as UnconstrainedItalic;
+      } satisfies UnconstrainedItalic;
     },
     ConstrainedItalic(_, content, __) {
       return {
         type: "ConstrainedItalic",
         content: content.toAST(),
-      } as ConstrainedItalic;
+      } satisfies ConstrainedItalic;
     },
     MonospaceText(_, content, __) {
       return {
         type: "MonospaceText",
         content: content.toAST(),
-      } as MonospaceText;
+      } satisfies MonospaceText;
     },
     Link(_, url, __, text, ___) {
       return {
         type: "Link",
         url: url.sourceString,
         text: text.sourceString,
-      } as Link;
+      } satisfies Link;
     },
-    InlineImage(_, url, __, alt, ___) {
+    ImageDims(width, _comma, height) {
+      const widthNum = width.sourceString ? parseInt(width.sourceString) : undefined;
+      const heightNum = height.sourceString ? parseInt(height.sourceString) : undefined;
+      return {
+        ...(widthNum ? { width: widthNum } : undefined),
+        ...(heightNum ? { height: heightNum } : undefined),
+      };
+    },
+    // ImageUrl = (~"[" any)+
+    // ImageH = "," Digits
+    // ImageW = Digits
+    // ImageDims = ImageW ImageH?
+    // InlineImage = "image:" ImageUrl "[" ImageAlt ("," ImageDims)? "]"
+    // BlockImage = "image::" ImageUrl "[" ImageAlt ("," ImageDims)? "]"
+    InlineImage(_img, url, _open, alt, _comma, dims, _close) {
       return {
         type: "InlineImage",
         url: url.sourceString,
         alt: alt.sourceString,
-      } as InlineImage;
+        ...dims.toAST(),
+      } satisfies InlineImage;
+    },
+    BlockImage(_img, url, _open, alt, _comma, dims, _close) {
+      const ast = this.inlineImage(_img, url, _open, alt, _comma, dims, _close).toAST();
+      return {
+        ...ast,
+        type: "BlockImage",
+      } satisfies BlockImage;
     },
     Footnote(_, id, __, text, ___) {
       return {
         type: "Footnote",
         id: id.sourceString || null,
         text: text.toAST(),
-      } as Footnote;
+      } satisfies Footnote;
     },
-    CrossReference(_, id, __, text, ___) {
+    CrossReference(_, id, text, __) {
       return {
         type: "CrossReference",
         id: id.sourceString,
         text: text.sourceString || null,
-      } as CrossReference;
+      } satisfies CrossReference;
     },
     InlinePassthrough(_, content, __) {
       return {
         type: "InlinePassthrough",
         content: content.sourceString,
-      } as InlinePassthrough;
+      } satisfies InlinePassthrough;
     },
     SubscriptText(_, content, __) {
       return {
         type: "SubscriptText",
         content: content.toAST(),
-      } as SubscriptText;
+      } satisfies SubscriptText;
     },
     SuperscriptText(_, content, __) {
       return {
         type: "SuperscriptText",
         content: content.toAST(),
-      } as SuperscriptText;
+      } satisfies SuperscriptText;
     },
     AttributeReference(_, name, __) {
       return {
         type: "AttributeReference",
         name: name.sourceString,
-      } as AttributeReference;
+      } satisfies AttributeReference;
     },
     ListItemContent(content, continuation, _dunno) {
       return [...content.toAST(), ...(continuation.toAST() || [])];
@@ -821,7 +662,7 @@ export const toAST = (input: string): Document => {
         scheme: scheme.sourceString,
         url: `${scheme.sourceString}:${url.sourceString}`,
         attributes: attributes.toAST(),
-      } as UrlMacro;
+      } satisfies UrlMacro;
     },
     AttributeList(_open, attrs, _close) {
       return attrs.toAST();
@@ -831,6 +672,9 @@ export const toAST = (input: string): Document => {
     },
     block_title(_, bt, __) {
       return bt.toAST();
+    },
+    line(content, _nl) {
+      return content.toAST();
     },
     _terminal() {
       return this.sourceString;
@@ -882,7 +726,7 @@ const maybePromoteToCodeBlock = (
     return {
       ...listingBlock,
       type: "CodeBlock",
-    } as CodeBlock;
+    } satisfies CodeBlock;
   }
   return listingBlock;
 };
@@ -894,3 +738,13 @@ const normalizeDepth = <T extends { depth: number }>(items: T[]): T[] => {
   }
   return items;
 };
+
+
+const truthyValuesOrEmptyPojo = <T extends Record<string,any>>(it: T): T | {} => {
+  for (const key in it) {
+    if (it[key] == null) {
+      return {};
+    }
+  }
+  return it;
+}

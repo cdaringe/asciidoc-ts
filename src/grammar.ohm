@@ -1,0 +1,219 @@
+AsciiDoc {
+  Document = Block* EndOfFile
+
+  AttributeList = "[" listOf<Attribute, ","> "]"
+  Attribute = AttributeNamed | AttributePositional
+  AttributePositional = (~"]" ~"," any)+
+  AttributeNamed = AttributePositional "=" AttributePositional
+
+  Block = BlockAnchor? BlockMetaData? BlockKind newline? newline?
+  BlockAnchor = "[[" anchorId anchorReftext?  "]]" newline
+  anchorId = (~"]" ~"," any)+
+  anchorReftext = "," (~"]]" any)*
+  BlockMetaData = block_title? AttributeList newline
+  block_title = "." ~space (~newline any)* newline
+  BlockKind = Header
+  | HeaderSetext
+  | BlockImage
+  | List
+  | Table
+  | BlockQuote
+  | HorizontalRule
+  | Admonition
+  | Sidebar
+  | PassthroughBlock
+  | MacroBlock
+  | CommentBlock
+  | ListingBlock
+  | Paragraph
+  | InlineElementOrPlainText
+  | BlankLine
+  | newline
+
+  LineElementStart = "="
+
+  inlineelstart =
+      | "*"  // constrained bold
+      | "**"  // unconstrained Bold
+      | "_"  // constrained Italics
+      | "__"  // Unconstrained Italics
+      | "//"  // Italic
+      | "`"   // Monospace
+      | "<<"  // Cross-reference start
+      | "link:"  // Link start
+      | "image:"  // Image start
+      | "footnote:"  // Footnote start
+      | "+++"  // Inline passthrough start
+      | "~"   // Subscript start
+      | "^"   // Superscript start
+      | "{"   // Attribute reference start
+
+  EndOfFile = newline? end  // Allow optional newline at end of file
+  SingleLineText = InlineElement+ newline?
+
+  HeaderSetext = HeaderTextSetext HeaderUnderlineSetext BlankLine*
+  HeaderTextSetext = line
+  HeaderUnderlineSetext = (("=" | "-")+ newline) | (("=" | "-")+ end)
+
+
+  Header = HeaderMarker HeaderContent newline?
+  HeaderMarker =
+  | "======"
+  | "====="
+  | "===="
+  | "==="
+  | "=="
+  | "="
+  HeaderContent = (~newline InlineElementOrPlainText)+
+
+  Paragraph = (~LineElementStart) ParagraphSegment
+  ParagraphSegment = InlineElementOrPlainText+ (BlankLine ParagraphSegment)?
+
+  List = UnorderedList
+       | OrderedList
+       | DescriptionList
+
+  UnorderedList = UnorderedListItem+
+  UnorderedListItem = unordered_list_marker ListItemContent newline?
+  ListItemContent = InlineElementOrPlainText+ (ListContinuation ListItemContent+)*
+  unordered_list_marker = ("*" | "-" | "•")+ space+
+
+  OrderedList = OrderedListItem+
+  OrderedListItem = OLMarker ListItemContent newline?
+  ol_marker_dot = ". "
+  OLMarkerDigits = Digits ol_marker_dot
+  OLMarker = OLMarkerDigits | ol_marker_dot
+
+  DescriptionList = DescriptionListItem+
+  DescriptionListItem = Term "::" DescriptionContent
+
+  ListContinuation = "+" newline ListItemContent
+
+  Term = (~"::" any)+
+
+  line = (~newline any)+ newline
+
+  DescriptionContent = line+
+
+  ListingBlock =
+    | ListingBlockDelimited
+
+  listingblockdelimiter = "----"
+
+  ListingBlockDelimited = listingblockdelimiter newline (~listingblockdelimiter any)* listingblockdelimiter newline?
+
+  BlockQuote = BlockQuoteDelimiter newline
+               (line | BlankLine)*
+               BlockQuoteDelimiter newline
+  BlockQuoteDelimiter = "____"
+
+  Table = TableDelimiter TableAttributes? newline
+          TableRow+
+          TableDelimiter newline
+  TableDelimiter = "|==="
+  TableAttributes = "[" listOf<TableAttribute, ","> "]"
+  TableAttribute = ColsAttribute | HeaderOption
+  ColsAttribute = "cols" "=" Digits
+  HeaderOption = "header"
+  TableRow = "|" TableCell ("|" TableCell)* newline
+  TableCell = InlineElement+
+
+  HorizontalRule = "'''" newline
+
+  Admonition = AdmonitionType admonitionContent+
+  admonitionContent = (~newline any)+
+  AdmonitionType = "NOTE:" | "TIP:" | "IMPORTANT:" | "WARNING:" | "CAUTION:"
+
+  Sidebar = SidebarDelimiter newline
+            (line | BlankLine)*
+            SidebarDelimiter newline
+  SidebarDelimiter = "****"
+
+  PassthroughBlock = PassthroughDelimiter newline
+                     (line | BlankLine)*
+                     PassthroughDelimiter newline
+  PassthroughDelimiter = "++++"
+
+  MacroBlock = MacroName "::" MacroTarget? AttributeList? newline
+               (line | BlankLine)*
+               MacroDelimiter newline
+  MacroName = letter+
+  MacroTarget = (~"[" any)+
+
+  MacroDelimiter = "----"
+
+  AttributeEntry = ":" AttributeName ":" AttributeValue? newline
+  AttributeName = (~":" any)+
+  AttributeValue = (~InlineElement any)*
+
+  CommentBlock = CommentDelimiter newline
+                 (line | BlankLine)*
+                 CommentDelimiter newline
+  CommentDelimiter = "////"
+
+  InlineElement =
+    | AttributeReference
+    | ConstrainedBold
+    | ConstrainedItalic
+    | CrossReference
+    | Footnote
+    | InlineImage
+    | InlinePassthrough
+    | Link
+    | MonospaceText
+    | SubscriptText
+    | SuperscriptText
+    | UnconstrainedBold
+    | UnconstrainedItalic
+    | UrlMacro
+
+  InlineElementOrPlainText = InlineElement | plaintext
+
+  plaintext = (~inlineelstart ~newline ~httpscheme any)+
+
+  ConstrainedBold = "*" (~"*" InlineElementOrPlainText)+ "*"
+  UnconstrainedBold = "*" ConstrainedBold "*"
+
+  UnconstrainedItalic = "_" (~"_" InlineElementOrPlainText)+ "_"
+  ConstrainedItalic = "_" UnconstrainedItalic "_"
+
+  MonospaceText = "`" (~"`" any)+ "`"
+  httpscheme = "https" | "http"
+  UrlMacroScheme = httpscheme | "ftp" | "irc" | "mailto"
+  UrlMacro = UrlMacroScheme ":" (~"[" any)+ AttributeList
+
+  Link = "link:" Url "[" LinkText "]"
+  Url = (~"[" any)+
+  LinkText = (~"]" any)*
+
+  ImageUrl = (~"[" any)+
+  ImageH = Digits
+  ImageW = Digits
+  ImageDims = ImageW ","? ImageH?
+  InlineImage = "image:" ImageUrl "[" ImageAlt ("," ImageDims)? "]"
+  BlockImage = "image::" ImageUrl "[" ImageAlt ("," ImageDims)? "]"
+  ImageAlt = (~"]" ~"," any)*
+
+  Footnote = "footnote:" FootnoteId? "[" FootnoteText "]"
+  FootnoteId = Digits
+  FootnoteText = (~"]" any)*
+
+  CrossReference = "<<" CrossReferenceId CrossReferenceText? ">>"
+  CrossReferenceId = (~"," ~">>" any)+
+  CrossReferenceText = "," (~">>" any)*
+
+  InlinePassthrough = "+++" (~"+++" any)+ "+++"
+
+  SubscriptText = "~" (~"~" any)+ "~"
+  SuperscriptText = "^" (~"^" any)+ "^"
+
+  AttributeReference = "{" AttributeName "}"
+
+  BlankLine = space* newline
+
+  Digits = digit+
+
+  newline = "\n" | "\r" | "\r\n"
+  space := " " --space
+    | "\t" --tab
+}
