@@ -4,7 +4,7 @@ exports[`Admonition - basic 1`] = `
 {
   "blocks": [
     {
-      "admonitionType": "NOTE:",
+      "admonitionType": "NOTE",
       "content": "This is an admonition.",
       "type": "Admonition",
     },

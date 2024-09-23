@@ -4,11 +4,22 @@ exports[`CodeBlock 1`] = `
 {
   "blocks": [
     {
-      "attributes": [
-        "source",
-        "js",
-      ],
-      "content": "foo();",
+      "content": "foo();
+
+bar();",
+      "delimited": true,
+      "metadata": {
+        "attributes": [
+          {
+            "name": "source",
+            "type": "AttributeEntry",
+          },
+          {
+            "name": "js",
+            "type": "AttributeEntry",
+          },
+        ],
+      },
       "type": "CodeBlock",
     },
   ],
@@ -20,15 +31,26 @@ exports[`ListingBlock - delimited 1`] = `
 {
   "blocks": [
     {
-      "attributes": [
-        "foo",
-        "bar",
-      ],
+      "type": "BlankLine",
+    },
+    {
       "content": "newlines are
 
 
 ok",
       "delimited": true,
+      "metadata": {
+        "attributes": [
+          {
+            "name": "foo",
+            "type": "AttributeEntry",
+          },
+          {
+            "name": "bar",
+            "type": "AttributeEntry",
+          },
+        ],
+      },
       "type": "ListingBlock",
     },
   ],
@@ -40,12 +62,28 @@ exports[`ListingBlock 1`] = `
 {
   "blocks": [
     {
-      "attributes": [
-        "foo",
-        "bar",
+      "type": "BlankLine",
+    },
+    {
+      "content": [
+        {
+          "content": "baz",
+          "type": "PlainText",
+        },
       ],
-      "content": "baz",
-      "type": "ListingBlock",
+      "metadata": {
+        "attributes": [
+          {
+            "name": "foo",
+            "type": "AttributeEntry",
+          },
+          {
+            "name": "bar",
+            "type": "AttributeEntry",
+          },
+        ],
+      },
+      "type": "Paragraph",
     },
   ],
   "type": "Document",

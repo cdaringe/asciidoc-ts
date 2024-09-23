@@ -10,23 +10,30 @@ const grammarString = String.raw`
 AsciiDoc {
   Document = Block* EndOfFile
 
-  Block = Header
-        | ListingBlock
-        | HeaderSetext
-        | List
-        | BlockQuote
-        | Table
-        | HorizontalRule
-        | Admonition
-        | Sidebar
-        | PassthroughBlock
-        | MacroBlock
-        | AttributeEntry
-        | CommentBlock
-        | newline
-        | BlankLine
-        | Paragraph
-        | InlineElementOrPlainText
+  AttributeList = "[" listOf<Attribute, ","> "]"
+  Attribute = AttributeNamed | AttributePositional
+  AttributePositional = (~"]" ~"," any)+
+  AttributeNamed = AttributePositional "=" AttributePositional
+
+  Block = BlockMetaData? BlockKind newline? newline?
+  BlockMetaData = block_title? AttributeList newline
+  block_title = "." ~space (~newline any)* newline
+  BlockKind = Header
+  | HeaderSetext
+  | List
+  | Table
+  | BlockQuote
+  | HorizontalRule
+  | Admonition
+  | Sidebar
+  | PassthroughBlock
+  | MacroBlock
+  | CommentBlock
+  | ListingBlock
+  | Paragraph
+  | InlineElementOrPlainText
+  | BlankLine
+  | newline
 
   LineElementStart = "="
 
@@ -54,7 +61,7 @@ AsciiDoc {
   HeaderUnderlineSetext = (("=" | "-")+ newline) | (("=" | "-")+ end)
 
 
-  Header = HeaderMarker HeaderContent newline
+  Header = HeaderMarker HeaderContent newline?
   HeaderMarker =
   | "======"
   | "====="
@@ -72,16 +79,19 @@ AsciiDoc {
        | DescriptionList
 
   UnorderedList = UnorderedListItem+
-  UnorderedListItem = ListMarker ListItemContent
+  UnorderedListItem = unordered_list_marker ListItemContent newline?
   ListItemContent = InlineElementOrPlainText+ (ListContinuation ListItemContent+)*
+  unordered_list_marker = ("*" | "-" | "•")+ space+
 
   OrderedList = OrderedListItem+
-  OrderedListItem = Digits "." ListItemContent
+  OrderedListItem = OLMarker ListItemContent newline?
+  ol_marker_dot = ". "
+  OLMarkerDigits = Digits ol_marker_dot
+  OLMarker = OLMarkerDigits | ol_marker_dot
 
   DescriptionList = DescriptionListItem+
   DescriptionListItem = Term "::" DescriptionContent
 
-  ListMarker = "* " | "- " | "• "
   ListContinuation = "+" newline ListItemContent
 
   Term = (~"::" any)+
@@ -89,14 +99,10 @@ AsciiDoc {
 
   ListingBlock =
     | ListingBlockDelimited
-    | ListingBlockNonDelimited
 
   listingblockdelimiter = "----"
 
-  ListingBlockAttributeHeader = "[" listOf<(space | alnum)+, ","> "]"
-  ListingBlockDelimited = ListingBlockAttributeHeader newline listingblockdelimiter (~listingblockdelimiter any)* listingblockdelimiter newline
-  ListingBlockNonDelimited =  ListingBlockAttributeHeader newline Paragraph newline
-
+  ListingBlockDelimited = listingblockdelimiter newline (~listingblockdelimiter any)* listingblockdelimiter newline?
 
   BlockQuote = BlockQuoteDelimiter newline
                (line | BlankLine)*
@@ -130,14 +136,12 @@ AsciiDoc {
                      PassthroughDelimiter newline
   PassthroughDelimiter = "++++"
 
-  MacroBlock = MacroName "::" MacroTarget? MacroAttributes? newline
+  MacroBlock = MacroName "::" MacroTarget? AttributeList? newline
                (line | BlankLine)*
                MacroDelimiter newline
   MacroName = letter+
   MacroTarget = (~"[" any)+
-  MacroAttributes = "[" listOf<MacroAttribute, ","> "]"
-  MacroAttributeKV = (alnum | "-")+ "=" alnum+
-  MacroAttribute = MacroAttributeKV | InlineElement | alnum+
+
   MacroDelimiter = "----"
 
   AttributeEntry = ":" AttributeName ":" AttributeValue? newline
@@ -178,7 +182,7 @@ AsciiDoc {
   MonospaceText = "${"`"}" (~"${"`"}" any)+ "${"`"}"
   httpscheme = "https" | "http"
   UrlMacroScheme = httpscheme | "ftp" | "irc" | "mailto"
-  UrlMacro = UrlMacroScheme ":" (~"[" any)+ MacroAttributes
+  UrlMacro = UrlMacroScheme ":" (~"[" any)+ AttributeList
 
   Link = "link:" Url "[" LinkText "]"
   Url = (~"[" any)+
@@ -225,39 +229,52 @@ interface Document {
   blocks: Block[];
 }
 
+interface BaseBlock {
+  metadata?: BlockMetaData;
+}
+
+/**
+ * https://docs.asciidoctor.org/asciidoc/latest/blocks/
+ */
+interface BlockMetaData {
+  attributes?: AttributeEntry[];
+  id?: string;
+  options?: string[];
+  roles?: string[];
+  title?: string;
+}
+
 type Block =
-  | HeaderSetext
-  | Header
-  | Paragraph
-  | UnorderedList
-  | OrderedList
-  | DescriptionList
+  | HeaderSetextBlock
+  | HeaderBlock
+  | ParagraphBlock
+  | UnorderedListBlock
+  | OrderedListBlock
+  | DescriptionListBlock
   | ListingBlock
-  | BlockQuote
-  | Table
-  | HorizontalRule
-  | Admonition
-  | Sidebar
+  | BlockQuoteBlock
+  | TableBlock
+  | HorizontalRuleBlock
+  | AdmonitionBlock
+  | SidebarBlock
   | PassthroughBlock
   | MacroBlock
-  | AttributeEntry
   | CommentBlock
-  | SingleLineText
   | BlankLine;
 
-interface HeaderSetext {
+interface HeaderSetextBlock extends BaseBlock {
   type: "HeaderSetext";
   level: 1 | 2;
   content: string;
 }
 
-interface Header {
+interface HeaderBlock extends BaseBlock {
   type: "Header";
   level: 1 | 2 | 3 | 4 | 5 | 6;
   content: string;
 }
 
-interface Paragraph {
+interface ParagraphBlock extends BaseBlock {
   type: "Paragraph";
   content: (InlineElement | PlainText)[];
 }
@@ -267,28 +284,30 @@ interface ParagraphSegment {
   content: InlineElement[];
 }
 
-interface UnorderedList {
+interface UnorderedListBlock extends BaseBlock {
   type: "UnorderedList";
   items: UnorderedListItem[];
 }
 
 interface UnorderedListItem {
   type: "UnorderedListItem";
+  depth: number;
   content: InlineElement[];
 }
 
-interface OrderedList {
+interface OrderedListBlock extends BaseBlock {
   type: "OrderedList";
   items: OrderedListItem[];
+  attributes?: AttributeEntry[];
 }
 
 interface OrderedListItem {
   type: "OrderedListItem";
-  number: number;
+  depth: number;
   content: InlineElement[];
 }
 
-interface DescriptionList {
+interface DescriptionListBlock extends BaseBlock {
   type: "DescriptionList";
   items: DescriptionListItem[];
 }
@@ -299,28 +318,25 @@ interface DescriptionListItem {
   description: InlineElement[];
 }
 
-/**
- *
- */
-interface ListingBlock {
+/** */
+interface ListingBlock extends BaseBlock {
   type: "ListingBlock";
-  attributes: string[];
   content: string;
   delimited?: boolean;
 }
 
-interface CodeBlock {
+interface CodeBlock extends BaseBlock {
   type: "CodeBlock";
   attributes: [kind: "source", /* language, ...rest */ ...rest: string[]];
-  content: string
+  content: string;
 }
 
-interface BlockQuote {
+interface BlockQuoteBlock extends BaseBlock {
   type: "BlockQuote";
   content: Block[];
 }
 
-interface Table {
+interface TableBlock extends BaseBlock {
   type: "Table";
   attributes: string | null;
   rows: TableRow[];
@@ -336,27 +352,27 @@ interface TableCell {
   content: InlineElement[];
 }
 
-interface HorizontalRule {
+interface HorizontalRuleBlock extends BaseBlock {
   type: "HorizontalRule";
 }
 
-interface Admonition {
+interface AdmonitionBlock extends BaseBlock {
   type: "Admonition";
   admonitionType: "NOTE" | "TIP" | "IMPORTANT" | "WARNING" | "CAUTION";
   content: Block[];
 }
 
-interface Sidebar {
+interface SidebarBlock extends BaseBlock {
   type: "Sidebar";
   content: Block[];
 }
 
-interface PassthroughBlock {
+interface PassthroughBlock extends BaseBlock {
   type: "PassthroughBlock";
   content: string;
 }
 
-interface MacroBlock {
+interface MacroBlock extends BaseBlock {
   type: "MacroBlock";
   name: string;
   target: string | null;
@@ -370,7 +386,7 @@ interface AttributeEntry {
   value?: string;
 }
 
-interface CommentBlock {
+interface CommentBlock extends BaseBlock {
   type: "CommentBlock";
   content: string;
 }
@@ -484,6 +500,13 @@ interface UrlMacro {
 export const toAST = (input: string): Document => {
   const semantics = grammar.createSemantics();
   semantics.addOperation("toAST", {
+    BlockMetaData(titleNode, attributes, _newline) {
+      const title = titleNode.toAST();
+      return {
+        ...(title.length ? { title } : undefined),
+        attributes: attributes.toAST(),
+      } as BlockMetaData;
+    },
     Document(blocks, _) {
       const astBlocks = (blocks.toAST() as Block[]).filter((it) => {
         if (typeof it === "string") {
@@ -499,35 +522,50 @@ export const toAST = (input: string): Document => {
         blocks: astBlocks,
       } as Document;
     },
-    Block(block) {
-      return block.toAST();
+    Block(metadata, blockKind, _nl1, _nl2) {
+      const [metadataAst] = metadata.toAST() ?? [];
+      const nextBlock = {
+        ...blockKind.toAST(),
+        ...(metadataAst
+          ? { metadata: metadataAst }
+          : undefined),
+      } as Block;
+      if (nextBlock.type === 'Paragraph' && nextBlock.metadata?.attributes?.find(it => it.name === 'listing')) {
+        (nextBlock as Block).type = 'ListingBlock';
+      }
+      if (nextBlock.type === "ListingBlock") {
+        return maybePromoteToCodeBlock(nextBlock);
+      }
+      return nextBlock;
     },
     HeaderSetext(text, underline, _) {
       return {
         type: "HeaderSetext",
         level: underline.sourceString[0] === "=" ? 1 : 2,
         content: text.sourceString.trim(),
-      } as HeaderSetext;
+      } as HeaderSetextBlock;
     },
     Header(marker, content, _maybeNewline) {
       return {
         type: "Header",
         level: marker.sourceString.length as 1 | 2 | 3 | 4 | 5 | 6,
         content: content.toAST(),
-      } as Header;
+      } as HeaderBlock;
     },
     Paragraph(content) {
-      const flattenParagraphSegments = (it: InlineElement | PlainText| ParagraphSegment): (InlineElement | PlainText)[]  => {
+      const flattenParagraphSegments = (
+        it: InlineElement | PlainText | ParagraphSegment,
+      ): (InlineElement | PlainText)[] => {
         if (it.type === "ParagraphSegment") {
           return it.content.flatMap(flattenParagraphSegments);
         }
         return [it];
-      }
+      };
 
       return {
         type: "Paragraph",
         content: flattenParagraphSegments(content.toAST() as ParagraphSegment),
-      } as Paragraph;
+      } as ParagraphBlock;
     },
     ParagraphSegment(content, _bl, continuation) {
       // ParagraphSegment = InlineElementOrPlainText+ (BlankLine ParagraphSegment)?
@@ -540,25 +578,26 @@ export const toAST = (input: string): Document => {
     UnorderedList(items) {
       return {
         type: "UnorderedList",
-        items: items.toAST(),
-      } as UnorderedList;
+        items: normalizeDepth(items.toAST() as UnorderedListItem[]),
+      } as UnorderedListBlock;
     },
-    UnorderedListItem(marker, content) {
+    UnorderedListItem(marker, content, _nl) {
       return {
         type: "UnorderedListItem",
+        depth: marker.sourceString.length,
         content: content.toAST(),
       } as UnorderedListItem;
     },
     OrderedList(items) {
       return {
         type: "OrderedList",
-        items: items.toAST(),
-      } as OrderedList;
+        items: normalizeDepth(items.toAST() as OrderedListItem[]),
+      } as OrderedListBlock;
     },
-    OrderedListItem(number, _, content) {
+    OrderedListItem(marker, content, _nl) {
       return {
         type: "OrderedListItem",
-        number: parseInt(number.sourceString),
+        depth: marker.sourceString.length,
         content: content.toAST(),
       } as OrderedListItem;
     },
@@ -566,7 +605,7 @@ export const toAST = (input: string): Document => {
       return {
         type: "DescriptionList",
         items: items.toAST(),
-      } as DescriptionList;
+      } as DescriptionListBlock;
     },
     DescriptionListItem(term, _, content) {
       return {
@@ -575,38 +614,25 @@ export const toAST = (input: string): Document => {
         description: content.toAST(),
       } as DescriptionListItem;
     },
-
-    ListingBlockAttributeHeader(_open, attrs, _close) {
-      return (attrs.toAST() as string[]).map((it) => it.trim());
-    },
-
-    ListingBlockDelimited(header, _newline, _d1, content, _d2, _newline2) {
-      return maybePromoteToCodeBlock({
+    ListingBlockDelimited(_d1, _nl1, content, _d2, _newline2) {
+      return {
         type: "ListingBlock",
-        attributes: header.toAST(),
         content: content.sourceString.trim(),
         delimited: true,
-      } as ListingBlock);
-    },
-    ListingBlockNonDelimited(header, _newline, content, _newline2) {
-      return maybePromoteToCodeBlock({
-        type: "ListingBlock",
-        attributes: header.toAST(),
-        content: content.sourceString.trim(),
-      } as ListingBlock);
+      } as ListingBlock;
     },
     BlockQuote(_open, _newline, content, _close, _newline2) {
       return {
         type: "BlockQuote",
         content: content.toAST(),
-      } as BlockQuote;
+      } as BlockQuoteBlock;
     },
     Table(_open, attrs, _newline, rows, _close, _newline2) {
       return {
         type: "Table",
         attributes: attrs.sourceString || null,
         rows: rows.children.map((row) => row.toAST()),
-      } as Table;
+      } as TableBlock;
     },
     TableRow(_marker, cells, _markers, _newline, _hmmwrong) {
       debugger; // eslint-disable-line
@@ -622,7 +648,7 @@ export const toAST = (input: string): Document => {
       } as TableCell;
     },
     HorizontalRule(_rule, _newline) {
-      return { type: "HorizontalRule" } as HorizontalRule;
+      return { type: "HorizontalRule" } as HorizontalRuleBlock;
     },
     Admonition(type, content) {
       return {
@@ -634,13 +660,13 @@ export const toAST = (input: string): Document => {
           | "WARNING"
           | "CAUTION",
         content: content.toAST(),
-      } as Admonition;
+      } as AdmonitionBlock;
     },
     Sidebar(_open, _newline, content, _close, _newline2) {
       return {
         type: "Sidebar",
         content: content.toAST(),
-      } as Sidebar;
+      } as SidebarBlock;
     },
     PassthroughBlock(_open, _newline, content, _close, _newline2) {
       return {
@@ -664,12 +690,18 @@ export const toAST = (input: string): Document => {
         value: value.sourceString.trim() || null,
       } as AttributeEntry;
     },
-    MacroAttributeKV(key, _eq, value) {
+    AttributePositional(content) {
+      return {
+        type: "AttributeEntry",
+        name: content.sourceString,
+      } as AttributeEntry;
+    },
+    AttributeNamed(key, _eq, value) {
       return {
         type: "AttributeEntry",
         name: key.toAST(),
         value: value ? value.sourceString : undefined,
-      } as AttributeEntry
+      } as AttributeEntry;
     },
     CommentBlock(_open, _newline, content, _close, _newline2) {
       return {
@@ -791,19 +823,25 @@ export const toAST = (input: string): Document => {
         attributes: attributes.toAST(),
       } as UrlMacro;
     },
-    MacroAttributes(_open, attrs, _close) {
+    AttributeList(_open, attrs, _close) {
       return attrs.toAST();
     },
-    nonemptyListOf(x, sep, xs) {
+    nonemptyListOf(x, _sep, xs) {
       return [x.toAST()].concat(xs.toAST());
+    },
+    block_title(_, bt, __) {
+      return bt.toAST();
     },
     _terminal() {
       return this.sourceString;
     },
     _iter(...children) {
       const next = children.map((child) => child.toAST());
-      if (typeof next[0] === "string" && next.every(it => typeof it === "string")) {
-        return next.join('');
+      if (
+        typeof next[0] === "string" &&
+        next.every((it) => typeof it === "string")
+      ) {
+        return next.join("");
       }
       return next;
     },
@@ -837,13 +875,22 @@ if (getEnvVar("DUMP_GRAMMAR")) {
   console.log(JSON.stringify(out.blocks, null, 2));
 }
 
-const maybePromoteToCodeBlock = (listingBlock: ListingBlock): ListingBlock | CodeBlock  => {
-  if (listingBlock.attributes[0] === "source") {
+const maybePromoteToCodeBlock = (
+  listingBlock: ListingBlock,
+): ListingBlock | CodeBlock => {
+  if (listingBlock.metadata?.attributes?.[0]?.name === "source") {
     return {
+      ...listingBlock,
       type: "CodeBlock",
-      attributes: listingBlock.attributes,
-      content: listingBlock.content,
     } as CodeBlock;
   }
   return listingBlock;
-}
+};
+
+const normalizeDepth = <T extends { depth: number }>(items: T[]): T[] => {
+  const commonDepth = Math.min(...items.map((it) => it.depth));
+  if (commonDepth > 1) {
+    items.forEach((it) => it.depth -= commonDepth);
+  }
+  return items;
+};

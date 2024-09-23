@@ -1,0 +1,97 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Parse block with metadata 1`] = `
+{
+  "blocks": [
+    {
+      "content": [
+        {
+          "content": "This is a paragraph with metadata.",
+          "type": "PlainText",
+        },
+      ],
+      "metadata": {
+        "attributes": [
+          {
+            "name": "#id",
+            "type": "AttributeEntry",
+          },
+          {
+            "name": ".role",
+            "type": "AttributeEntry",
+          },
+        ],
+        "title": "Block Title",
+      },
+      "type": "Paragraph",
+    },
+  ],
+  "type": "Document",
+}
+`;
+
+exports[`Parse header block 1`] = `
+{
+  "blocks": [
+    {
+      "content": [
+        {
+          "content": "Section Header",
+          "type": "PlainText",
+        },
+      ],
+      "level": 2,
+      "type": "Header",
+    },
+  ],
+  "type": "Document",
+}
+`;
+
+exports[`Parse listing block 1`] = `
+{
+  "blocks": [
+    {
+      "content": "function hello() {
+  console.log("Hello, world!");
+}",
+      "delimited": true,
+      "metadata": {
+        "attributes": [
+          {
+            "name": "source",
+            "type": "AttributeEntry",
+          },
+          {
+            "name": "javascript",
+            "type": "AttributeEntry",
+          },
+        ],
+      },
+      "type": "CodeBlock",
+    },
+  ],
+  "type": "Document",
+}
+`;
+
+exports[`Parse paragraph block 1`] = `
+{
+  "blocks": [
+    {
+      "content": [
+        {
+          "content": "This is a simple paragraph block.",
+          "type": "PlainText",
+        },
+        {
+          "content": "It can span multiple lines.",
+          "type": "PlainText",
+        },
+      ],
+      "type": "Paragraph",
+    },
+  ],
+  "type": "Document",
+}
+`;

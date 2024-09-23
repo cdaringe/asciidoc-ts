@@ -1,26 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Parse URL Macro 1`] = `
-{
-  "blocks": [
-    {
-      "content": [
-        {
-          "attributes": [
-            "ExampleWebsite",
-          ],
-          "scheme": "https",
-          "type": "UrlMacro",
-          "url": "[semantics wrapper for AsciiDoc]://example.com",
-        },
-      ],
-      "type": "Paragraph",
-    },
-  ],
-  "type": "Document",
-}
-`;
-
 exports[`Sequential InlineElements 1`] = `
 {
   "blocks": [

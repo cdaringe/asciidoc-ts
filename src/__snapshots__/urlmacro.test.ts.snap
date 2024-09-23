@@ -7,8 +7,14 @@ exports[`Parse URL Macro 1`] = `
       "content": [
         {
           "attributes": [
-            "foo",
-            "bar",
+            {
+              "name": "foo",
+              "type": "AttributeEntry",
+            },
+            {
+              "name": "bar",
+              "type": "AttributeEntry",
+            },
           ],
           "scheme": "https",
           "type": "UrlMacro",

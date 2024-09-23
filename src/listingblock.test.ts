@@ -30,8 +30,10 @@ test("CodeBlock", async ({ expect }) => {
 [source, js]
 ----
 foo();
+
+bar();
 ----
-`;
+`.trimStart();
   const result = toAST(input);
   expect(result).toMatchSnapshot();
 });

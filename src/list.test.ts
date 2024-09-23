@@ -6,7 +6,7 @@ test.only("Unordered List", async ({ expect }) => {
 * Item 1 **bold**
 * Item 2 _italic_
 * Item 3 https://foo.org[fooish, aria-role=quz]
-  `;
+  `.trim();
   const result = toAST(input);
   expect(result).toMatchSnapshot();
 });

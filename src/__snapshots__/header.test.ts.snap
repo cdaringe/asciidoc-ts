@@ -22,8 +22,14 @@ exports[`Parse Header (without \\n is PlainText) 1`] = `
 {
   "blocks": [
     {
-      "content": "= Main Header",
-      "type": "PlainText",
+      "content": [
+        {
+          "content": "Main Header",
+          "type": "PlainText",
+        },
+      ],
+      "level": 1,
+      "type": "Header",
     },
   ],
   "type": "Document",

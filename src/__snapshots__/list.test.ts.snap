@@ -24,13 +24,9 @@ exports[`Unordered List 1`] = `
               "type": "UnconstrainedBold",
             },
           ],
+          "depth": 0,
           "type": "UnorderedListItem",
         },
-      ],
-      "type": "UnorderedList",
-    },
-    {
-      "items": [
         {
           "content": [
             {
@@ -47,13 +43,9 @@ exports[`Unordered List 1`] = `
               "type": "UnconstrainedItalic",
             },
           ],
+          "depth": 0,
           "type": "UnorderedListItem",
         },
-      ],
-      "type": "UnorderedList",
-    },
-    {
-      "items": [
         {
           "content": [
             {
@@ -62,11 +54,13 @@ exports[`Unordered List 1`] = `
             },
             {
               "attributes": [
-                "fooish",
                 {
-                  "name": "aria-role",
+                  "name": "fooish",
                   "type": "AttributeEntry",
-                  "value": "quz",
+                },
+                {
+                  "name": "aria-role=quz",
+                  "type": "AttributeEntry",
                 },
               ],
               "scheme": "https",
@@ -74,6 +68,7 @@ exports[`Unordered List 1`] = `
               "url": "https://foo.org",
             },
           ],
+          "depth": 0,
           "type": "UnorderedListItem",
         },
       ],
