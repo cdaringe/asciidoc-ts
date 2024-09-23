@@ -2,6 +2,10 @@ import { grammar as ohmGrammar } from "ohm-js";
 import { getEnvVar } from "./env.js";
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const grammarFilename = path.resolve(__dirname, 'grammar.ohm');
 
@@ -271,6 +275,12 @@ interface Footnote {
   text: InlineElement[];
 }
 
+interface ExampleBlock extends BaseBlock {
+  type: "ExampleBlock";
+  content: string;
+  delimited: boolean;
+}
+
 interface CrossReference {
   type: "CrossReference";
   id: string;
@@ -295,6 +305,12 @@ interface SuperscriptText {
 interface AttributeReference {
   type: "AttributeReference";
   name: string;
+}
+
+interface QuotedParagraphBlock extends BaseBlock {
+  type: "QuotedParagraphBlock";
+  content: string;
+  citation: string;
 }
 
 interface UrlMacro {
@@ -322,6 +338,13 @@ export const toAST = (input: string): Document => {
         id: id.sourceString,
         ...(reftext.length ? { reftext } : undefined),
       } satisfies BlockAnchor;
+    },
+    ExampleBlock(_open, _nl1, content, _nl2, _close, _nl3) {
+      return {
+        type: "ExampleBlock",
+        content: content.sourceString,
+        delimited: true,
+      } satisfies ExampleBlock;
     },
     anchorReftext(_comma, text) {
       return text.sourceString;
@@ -412,6 +435,14 @@ export const toAST = (input: string): Document => {
         type: "OrderedList",
         items: normalizeDepth(items.toAST() as OrderedListItem[]),
       } satisfies OrderedListBlock;
+    },
+    QuotedParagraphBlock(_open, content, _closed, _newline, _attribution, citation, _newline2) {
+      // QuotedParagraphBlock = '"' (~'"' any)* '"' newline "--" plaintext? newline
+      return {
+        type: "QuotedParagraphBlock",
+        content: content.sourceString,
+        citation: citation.sourceString,
+      } satisfies QuotedParagraphBlock;
     },
     OrderedListItem(marker, content, _nl) {
       return {
@@ -522,7 +553,7 @@ export const toAST = (input: string): Document => {
         value: value ? value.sourceString : undefined,
       } satisfies AttributeEntry;
     },
-    CommentBlock(_open, _newline, content, _close, _newline2) {
+    CommentBlock(_open, _nl1, content, _close, _nl3) {
       return {
         type: "CommentBlock",
         content: content.sourceString,
@@ -726,7 +757,7 @@ const maybePromoteToCodeBlock = (
     return {
       ...listingBlock,
       type: "CodeBlock",
-    } satisfies CodeBlock;
+    } as CodeBlock;
   }
   return listingBlock;
 };

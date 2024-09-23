@@ -4,8 +4,13 @@ Grammar, parser, printer for https://docs.asciidoctor.org/[asciidoc].
 
 WARNING: The grammar does not follow asciidoc perfectly, but gets you 99% there.
 
+== ToDo
+
+* Improve AST types for well-known attributes. Many position attributes correlate to concrete things, but aren't modeled. For example `[quote, Albert Einstein]` are just two generic `Attribute`s, but the second could be a `AttributeAuthor` or similar.
+
 == Known Issues
 
 * List levels. No fancy list marker switching yields nesting behavior changes.
 * Escaped list marker: https://docs.asciidoctor.org/asciidoc/latest/lists/ordered/#escaping-the-list-marker
-* block anchor syntax. Please instead use the id attribute. @see https://docs.asciidoctor.org/asciidoc/latest/sections/custom-ids/
+* block masquerading https://docs.asciidoctor.org/asciidoc/latest/blocks/masquerading/
+* Non-default fence lengths (e.g. 5 char `=====` fences for an ExampleBlock)

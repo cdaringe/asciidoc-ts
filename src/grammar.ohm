@@ -15,6 +15,8 @@ AsciiDoc {
   BlockKind = Header
   | HeaderSetext
   | BlockImage
+  | ExampleBlock
+  | QuotedParagraphBlock
   | List
   | Table
   | BlockQuote
@@ -30,6 +32,11 @@ AsciiDoc {
   | BlankLine
   | newline
 
+  doublequote = "\""
+
+  ExampleBlock = "====" newline (~(newline "====") any)* newline "====" newline
+
+  QuotedParagraphBlock = doublequote (~doublequote any)* doublequote newline "--" plaintext? newline
   LineElementStart = "="
 
   inlineelstart =
@@ -102,10 +109,10 @@ AsciiDoc {
 
   ListingBlockDelimited = listingblockdelimiter newline (~listingblockdelimiter any)* listingblockdelimiter newline?
 
-  BlockQuote = BlockQuoteDelimiter newline
-               (line | BlankLine)*
-               BlockQuoteDelimiter newline
-  BlockQuoteDelimiter = "____"
+  BlockQuote = block_quote_delimiter newline
+               (~block_quote_delimiter (line | BlankLine))*
+               block_quote_delimiter newline
+  block_quote_delimiter = "____"
 
   Table = TableDelimiter TableAttributes? newline
           TableRow+
@@ -146,10 +153,10 @@ AsciiDoc {
   AttributeName = (~":" any)+
   AttributeValue = (~InlineElement any)*
 
-  CommentBlock = CommentDelimiter newline
-                 (line | BlankLine)*
-                 CommentDelimiter newline
-  CommentDelimiter = "////"
+  CommentBlock = comment_delimiter newline
+                 (~comment_delimiter any)*
+                 comment_delimiter newline
+  comment_delimiter = "////"
 
   InlineElement =
     | AttributeReference

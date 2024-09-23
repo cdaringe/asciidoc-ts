@@ -8,7 +8,37 @@ baz
 
 `;
   const result = toAST(input);
-  expect(result).toMatchSnapshot();
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "blocks": [
+        {
+          "type": "BlankLine",
+        },
+        {
+          "content": [
+            {
+              "content": "baz",
+              "type": "PlainText",
+            },
+          ],
+          "metadata": {
+            "attributes": [
+              {
+                "name": "foo",
+                "type": "AttributeEntry",
+              },
+              {
+                "name": "bar",
+                "type": "AttributeEntry",
+              },
+            ],
+          },
+          "type": "Paragraph",
+        },
+      ],
+      "type": "Document",
+    }
+  `);
 });
 
 test("ListingBlock - delimited", async ({ expect }) => {
@@ -22,7 +52,36 @@ ok
 ----
 `;
   const result = toAST(input);
-  expect(result).toMatchSnapshot();
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "blocks": [
+        {
+          "type": "BlankLine",
+        },
+        {
+          "content": "newlines are
+
+
+    ok",
+          "delimited": true,
+          "metadata": {
+            "attributes": [
+              {
+                "name": "foo",
+                "type": "AttributeEntry",
+              },
+              {
+                "name": "bar",
+                "type": "AttributeEntry",
+              },
+            ],
+          },
+          "type": "ListingBlock",
+        },
+      ],
+      "type": "Document",
+    }
+  `);
 });
 
 test("CodeBlock", async ({ expect }) => {
@@ -35,5 +94,30 @@ bar();
 ----
 `.trimStart();
   const result = toAST(input);
-  expect(result).toMatchSnapshot();
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "blocks": [
+        {
+          "content": "foo();
+
+    bar();",
+          "delimited": true,
+          "metadata": {
+            "attributes": [
+              {
+                "name": "source",
+                "type": "AttributeEntry",
+              },
+              {
+                "name": "js",
+                "type": "AttributeEntry",
+              },
+            ],
+          },
+          "type": "CodeBlock",
+        },
+      ],
+      "type": "Document",
+    }
+  `);
 });
