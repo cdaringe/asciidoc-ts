@@ -103,11 +103,11 @@ AsciiDoc {
   DescriptionContent = line+
 
   BlockListing =
-    | ListingBlockDelimited
+    | BlockListingDelimited
 
   listingblockdelimiter = "----"
 
-  ListingBlockDelimited = listingblockdelimiter newline (~listingblockdelimiter any)* listingblockdelimiter newline?
+  BlockListingDelimited = listingblockdelimiter newline (~listingblockdelimiter any)* listingblockdelimiter newline?
 
   BlockQuote = block_quote_delimiter newline
                (~block_quote_delimiter (line | BlankLine))*

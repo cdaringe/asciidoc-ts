@@ -1,6 +1,6 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
-test("ListingBlock", async ({ expect }) => {
+test("BlockListing", async ({ expect }) => {
   const input = `
 [foo, bar]
 baz
@@ -74,14 +74,14 @@ ok
               },
             ],
           },
-          "type": "ListingBlock",
+          "type": "BlockListing",
         },
       ],
       "type": "Document",
     }
   `);
 });
-test("CodeBlock", async ({ expect }) => {
+test("BlockCode", async ({ expect }) => {
   const input = `
 [source, js]
 ----
@@ -111,7 +111,7 @@ bar();
               },
             ],
           },
-          "type": "CodeBlock",
+          "type": "BlockCode",
         },
       ],
       "type": "Document",

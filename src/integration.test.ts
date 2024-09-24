@@ -137,7 +137,7 @@ NOTE: This is an admonition.
               },
             ],
           },
-          "type": "CodeBlock",
+          "type": "BlockCode",
         },
         {
           "content": [

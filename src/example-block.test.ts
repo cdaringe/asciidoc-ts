@@ -1,6 +1,6 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
-test("ExampleBlock", async ({ expect }) => {
+test("BlockExample", async ({ expect }) => {
   const input = `====
 best example.
 ====
@@ -12,7 +12,7 @@ best example.
         {
           "content": "best example.",
           "delimited": true,
-          "type": "ExampleBlock",
+          "type": "BlockExample",
         },
       ],
       "type": "Document",

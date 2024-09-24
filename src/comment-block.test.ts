@@ -20,7 +20,7 @@ _I can!_
 
     _I can!_
     ",
-          "type": "CommentBlock",
+          "type": "BlockComment",
         },
       ],
       "type": "Document",

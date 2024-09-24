@@ -13,4 +13,4 @@ WARNING: The grammar does not follow asciidoc perfectly, but gets you 99% there.
 * List levels. No fancy list marker switching yields nesting behavior changes.
 * Escaped list marker: https://docs.asciidoctor.org/asciidoc/latest/lists/ordered/#escaping-the-list-marker
 * block masquerading https://docs.asciidoctor.org/asciidoc/latest/blocks/masquerading/
-* Non-default fence lengths (e.g. 5 char `=====` fences for an ExampleBlock)
+* Non-default fence lengths (e.g. 5 char `=====` fences for an BlockExample)
