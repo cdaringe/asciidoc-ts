@@ -40,15 +40,15 @@ type Block =
   | UnorderedListBlock
   | OrderedListBlock
   | DescriptionListBlock
-  | ListingBlock
-  | BlockQuoteBlock
+  | BlockListing
+  | BlockQuote
   | TableBlock
   | HorizontalRuleBlock
   | AdmonitionBlock
   | SidebarBlock
-  | PassthroughBlock
-  | MacroBlock
-  | CommentBlock
+  | BlockPassthrough
+  | BlockMacro
+  | BlockComment
   | BlankLine;
 interface HeaderSetextBlock extends BaseBlock {
   content: string;
@@ -97,7 +97,7 @@ interface DescriptionListItem {
   type: "DescriptionListItem";
 }
 /** */
-interface ListingBlock extends BaseBlock {
+interface BlockListing extends BaseBlock {
   content: string;
   delimited?: boolean;
   type: "ListingBlock";
@@ -112,7 +112,7 @@ interface CodeBlock extends BaseBlock {
   };
   type: "CodeBlock";
 }
-interface BlockQuoteBlock extends BaseBlock {
+interface BlockQuote extends BaseBlock {
   content: Block[];
   type: "BlockQuote";
 }
@@ -141,11 +141,11 @@ interface SidebarBlock extends BaseBlock {
   content: Block[];
   type: "Sidebar";
 }
-interface PassthroughBlock extends BaseBlock {
+interface BlockPassthrough extends BaseBlock {
   content: string;
   type: "PassthroughBlock";
 }
-interface MacroBlock extends BaseBlock {
+interface BlockMacro extends BaseBlock {
   attributes?: string;
   content: string;
   name: string;
@@ -157,7 +157,7 @@ interface AttributeEntry<Name extends string = string> {
   type: "AttributeEntry";
   value?: string;
 }
-interface CommentBlock extends BaseBlock {
+interface BlockComment extends BaseBlock {
   content: string;
   type: "CommentBlock";
 }
@@ -229,7 +229,7 @@ interface Footnote {
   text: InlineElement[];
   type: "Footnote";
 }
-interface ExampleBlock extends BaseBlock {
+interface BlockExample extends BaseBlock {
   content: string;
   delimited: boolean;
   type: "ExampleBlock";
@@ -255,7 +255,7 @@ interface AttributeReference {
   name: string;
   type: "AttributeReference";
 }
-interface QuotedParagraphBlock extends BaseBlock {
+interface BlockQuotedParagraph extends BaseBlock {
   citation: string;
   content: string;
   type: "QuotedParagraphBlock";
@@ -282,7 +282,7 @@ export const toAST = (input: string): Document => {
     _terminal() {
       return this.sourceString;
     },
-    Admonition(type, content) {
+    BlockAdmonition(type, content) {
       return {
         type: "Admonition",
         admonitionType: type.sourceString.slice(0, -1) as
@@ -379,9 +379,9 @@ export const toAST = (input: string): Document => {
       return {
         type: "BlockQuote",
         content: content.toAST(),
-      } satisfies BlockQuoteBlock;
+      } satisfies BlockQuote;
     },
-    CommentBlock(_open, _nl1, content, _close, _nl3) {
+    BlockComment(_open, _nl1, content, _close, _nl3) {
       return {
         type: "CommentBlock",
         content: content.sourceString,
@@ -434,7 +434,7 @@ export const toAST = (input: string): Document => {
         blocks: astBlocks,
       } satisfies Document;
     },
-    ExampleBlock(_open, _nl1, content, _nl2, _close, _nl3) {
+    BlockExample(_open, _nl1, content, _nl2, _close, _nl3) {
       return {
         type: "ExampleBlock",
         content: content.sourceString,
@@ -455,14 +455,14 @@ export const toAST = (input: string): Document => {
         content: content.toAST(),
       } satisfies HeaderBlock;
     },
-    HeaderSetext(text, underline, _) {
+    BlockHeaderSetext(text, underline, _) {
       return {
         type: "HeaderSetext",
         level: underline.sourceString[0] === "=" ? 1 : 2,
         content: text.sourceString.trim(),
       } satisfies HeaderSetextBlock;
     },
-    HorizontalRule(_rule, _newline) {
+    BlockHorizontalRule(_rule, _newline) {
       return { type: "HorizontalRule" } satisfies HorizontalRuleBlock;
     },
     ImageDims(width, _comma, height) {
@@ -523,7 +523,7 @@ export const toAST = (input: string): Document => {
     ListItemContent(content, continuation, _dunno) {
       return [...content.toAST(), ...(continuation.toAST() || [])];
     },
-    MacroBlock(name, _, target, attrs, _newline, content, _close, _newline2) {
+    BlockMacro(name, _, target, attrs, _newline, content, _close, _newline2) {
       return {
         type: "MacroBlock",
         name: name.sourceString,
@@ -554,7 +554,7 @@ export const toAST = (input: string): Document => {
         content: content.toAST(),
       } satisfies OrderedListItem;
     },
-    Paragraph(content) {
+    BlockParagraph(content) {
       const flattenParagraphSegments = (
         it: InlineElement | PlainText | ParagraphSegment,
       ): (InlineElement | PlainText)[] => {
@@ -576,7 +576,7 @@ export const toAST = (input: string): Document => {
         content: children,
       } satisfies ParagraphSegment;
     },
-    PassthroughBlock(_open, _newline, content, _close, _newline2) {
+    BlockPassthrough(_open, _newline, content, _close, _newline2) {
       return {
         type: "PassthroughBlock",
         content: content.sourceString,
@@ -588,7 +588,7 @@ export const toAST = (input: string): Document => {
         content: content.sourceString,
       } satisfies PlainText;
     },
-    QuotedParagraphBlock(
+    BlockQuotedParagraph(
       _open,
       content,
       _closed,
@@ -597,14 +597,14 @@ export const toAST = (input: string): Document => {
       citation,
       _newline2,
     ) {
-      // QuotedParagraphBlock = '"' (~'"' any)* '"' newline "--" plaintext? newline
+      // BlockQuotedParagraph = '"' (~'"' any)* '"' newline "--" plaintext? newline
       return {
         type: "QuotedParagraphBlock",
         content: content.sourceString,
         citation: citation.sourceString,
       } satisfies QuotedParagraphBlock;
     },
-    Sidebar(_open, _newline, content, _close, _newline2) {
+    BlockSidebar(_open, _newline, content, _close, _newline2) {
       return {
         type: "Sidebar",
         content: content.toAST(),
@@ -628,7 +628,7 @@ export const toAST = (input: string): Document => {
         content: content.toAST(),
       } satisfies SuperscriptText;
     },
-    Table(_open, attrs, _newline, rows, _close, _newline2) {
+    BlockTable(_open, attrs, _newline, rows, _close, _newline2) {
       return {
         type: "Table",
         attributes: attrs.sourceString || null,
@@ -709,7 +709,7 @@ if (getEnvVar("DUMP_GRAMMAR")) {
 }
 const maybePromoteToCodeBlock = (
   listingBlock: ListingBlock,
-): ListingBlock | CodeBlock => {
+): BlockListing | CodeBlock => {
   if (listingBlock.metadata?.attributes?.[0]?.name === "source") {
     return {
       ...listingBlock,

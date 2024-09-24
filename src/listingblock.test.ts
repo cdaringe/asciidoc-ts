@@ -39,7 +39,7 @@ baz
     }
   `);
 });
-test("ListingBlock - delimited", async ({ expect }) => {
+test("BlockListing - delimited", async ({ expect }) => {
   const input = `
 [foo, bar]
 ----

@@ -242,7 +242,7 @@ test("Cross-references - to non-section elements", async ({ expect }) => {
 reference to <<table-1>>.
 
 [[table-1]]
-.Table 1: Sample data
+.BlockTable 1: Sample data
 |===
 | Header 1 |
 | Data 1   |
@@ -277,7 +277,7 @@ reference to <<table-1>>.
           },
           "content": [
             {
-              "content": ".Table 1: Sample data",
+              "content": ".BlockTable 1: Sample data",
               "type": "PlainText",
             },
             {
