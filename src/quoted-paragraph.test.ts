@@ -1,6 +1,5 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
-
 test("block quote ___ delimiting", async ({ expect }) => {
   const input =
     `"I hold it that a little rebellion now and then is a good thing,

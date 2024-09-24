@@ -1,6 +1,5 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
-
 test("Complex Document", async ({ expect }) => {
   const input = `
 = Main Header

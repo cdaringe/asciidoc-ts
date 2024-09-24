@@ -19,7 +19,7 @@ export default [
   ...compat.extends(
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:typescript-sort-keys/recommended"
+    "plugin:typescript-sort-keys/recommended",
   ),
   {
     plugins: {
@@ -44,8 +44,8 @@ export default [
       }],
 
       "sort-keys": "off",
-          "typescript-sort-keys/interface": "error",
-    "typescript-sort-keys/string-enum": "error",
+      "typescript-sort-keys/interface": "error",
+      "typescript-sort-keys/string-enum": "error",
 
       semi: ["error", "always"],
       "no-useless-escape": "off",

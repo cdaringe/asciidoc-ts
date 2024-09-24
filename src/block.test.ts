@@ -1,6 +1,5 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
-
 test("Parse block with metadata", async ({ expect }) => {
   const input = `.Block Title
 [#id, .role]
@@ -36,7 +35,6 @@ This is a paragraph with metadata.`.trimStart();
     }
   `);
 });
-
 test("Parse paragraph block", async ({ expect }) => {
   const input = `This is a simple paragraph block.
 It can span multiple lines.`;
@@ -62,7 +60,6 @@ It can span multiple lines.`;
     }
   `);
 });
-
 test("Parse header block", async ({ expect }) => {
   const input = `== Section Header`;
   const result = toAST(input);
@@ -84,7 +81,6 @@ test("Parse header block", async ({ expect }) => {
     }
   `);
 });
-
 test("Parse listing block", async ({ expect }) => {
   const input = `[source,javascript]
 ----

@@ -1,6 +1,5 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
-
 test("Cross-references - internal", async ({ expect }) => {
   const input = `
 = Document Title
@@ -141,7 +140,6 @@ This is a subsection.
     }
   `);
 });
-
 test("Cross-references - with custom text", async ({ expect }) => {
   const input = `
 = Document Title
@@ -156,7 +154,6 @@ For more details, see <<conclusion,the conclusion of this document>>.
 
 As mentioned in <<introduction,the introduction>>, this is the end of the document.
 `.trim();
-
   const result = toAST(input);
   expect(result).toMatchInlineSnapshot(`
     {
@@ -240,7 +237,6 @@ As mentioned in <<introduction,the introduction>>, this is the end of the docume
     }
   `);
 });
-
 test("Cross-references - to non-section elements", async ({ expect }) => {
   const input = `
 reference to <<table-1>>.

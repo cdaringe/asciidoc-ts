@@ -1,6 +1,5 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
-
 test.only("Unordered List", async ({ expect }) => {
   const input = `
 * Item 1 **bold**
@@ -87,7 +86,6 @@ test.only("Unordered List", async ({ expect }) => {
     }
   `);
 });
-
 test("Ordered List", async ({ expect }) => {
   const input = `
 1. First item

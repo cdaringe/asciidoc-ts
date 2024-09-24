@@ -1,6 +1,5 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
-
 test("ListingBlock", async ({ expect }) => {
   const input = `
 [foo, bar]
@@ -40,7 +39,6 @@ baz
     }
   `);
 });
-
 test("ListingBlock - delimited", async ({ expect }) => {
   const input = `
 [foo, bar]
@@ -83,7 +81,6 @@ ok
     }
   `);
 });
-
 test("CodeBlock", async ({ expect }) => {
   const input = `
 [source, js]

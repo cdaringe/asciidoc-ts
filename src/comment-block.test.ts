@@ -1,6 +1,5 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
-
 test("Comment", async ({ expect }) => {
   const input = `////
 totally cool comment.
