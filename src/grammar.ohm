@@ -1,42 +1,61 @@
 AsciiDoc {
-  Document = Block* EndOfFile
+  Document = DocElement* EndOfFile
+  DocElement =
+    | DocumentAttribute -- attr
+    | Block -- block
+
+  wrapping_attr_text = (~newline ~space_backslash any)+ space_backslash
+  DocumentAttributeValueWrappedText = wrapping_attr_text newline DocumentAttributeValue
+  DocumentAttributeValueSingleText = (~newline any)* newline
+  DocumentAttributeValue =
+    | DocumentAttributeValueWrappedText -- val_wrapped
+    | DocumentAttributeValueSingleText -- val
+  document_attribute_key = (~":" ~space any)+
+  DocumentAttribute = ":" document_attribute_key ":" DocumentAttributeValue
 
   AttributeList = "[" listOf<Attribute, ","> "]"
   Attribute = AttributeNamed | AttributePositional
   AttributePositional = (~"]" ~"," any)+
   AttributeNamed = AttributePositional "=" AttributePositional
 
-  Block = BlockAnchor? BlockMetaData? BlockKind newline? newline?
+  BlockStructure<t> = BlockAnchor? BlockMetaData? t newline? newline?
+  Block =
+    | BlockStructure<Fence> -- blockf
+    | BlockStructure<NonFencable>  -- blocknf
+
   BlockAnchor = "[[" anchorId anchorReftext?  "]]" newline
   anchorId = (~"]" ~"," any)+
   anchorReftext = "," (~"]]" any)*
   BlockMetaData = block_title? AttributeList newline
   block_title = "." ~space (~newline any)* newline
-  BlockKind = Header
-  | BlockHeaderSetext
-  | BlockImage
-  | BlockExample
-  | BlockQuotedParagraph
-  | BlockList
+
+  NonFencable =
+    | Header
+    | BlockHeaderSetext
+    | BlockQuotedParagraph
+    | BlockImage
+    | BlockList
+    | BlockHorizontalRule
+    | BlockMacro
+    | BlankLine
+    | BlockParagraph
+    | newline
+
+  BlockContentino<delim> = newline? (~delim InlineElementOrText)+ BlockContentino<delim>?
+
+  Fencable<delim> =
   | BlockTable
   | BlockQuote
-  | BlockHorizontalRule
   | BlockAdmonition
   | BlockSidebar
   | BlockPassthrough
-  | BlockMacro
   | BlockComment
-  | BlockListing
-  | BlockParagraph
-  | InlineElementOrPlainText
-  | BlankLine
-  | newline
+  | BlockContentino<delim>
 
   doublequote = "\""
 
-  BlockExample = "====" newline (~(newline "====") any)* newline "====" newline
+  BlockQuotedParagraph = doublequote (~doublequote any)* doublequote newline "--" any_non_newline? newline
 
-  BlockQuotedParagraph = doublequote (~doublequote any)* doublequote newline "--" plaintext? newline
   LineElementStart = "="
 
   inlineelstart =
@@ -71,10 +90,10 @@ AsciiDoc {
   | "==="
   | "=="
   | "="
-  HeaderContent = (~newline InlineElementOrPlainText)+
+  HeaderContent = (~newline InlineElementOrText)+
 
   BlockParagraph = (~LineElementStart) ParagraphSegment
-  ParagraphSegment = InlineElementOrPlainText+ (BlankLine ParagraphSegment)?
+  ParagraphSegment = InlineElementOrText+ (BlankLine ParagraphSegment)?
 
   BlockList = UnorderedList
        | OrderedList
@@ -82,7 +101,7 @@ AsciiDoc {
 
   UnorderedList = UnorderedListItem+
   UnorderedListItem = unordered_list_marker ListItemContent newline?
-  ListItemContent = InlineElementOrPlainText+ (ListContinuation ListItemContent+)*
+  ListItemContent = InlineElementOrText+ (ListContinuation ListItemContent+)*
   unordered_list_marker = ("*" | "-" | "•")+ space+
 
   OrderedList = OrderedListItem+
@@ -101,13 +120,6 @@ AsciiDoc {
   line = (~newline any)+ newline
 
   DescriptionContent = line+
-
-  BlockListing =
-    | BlockListingDelimited
-
-  listingblockdelimiter = "----"
-
-  BlockListingDelimited = listingblockdelimiter newline (~listingblockdelimiter any)* listingblockdelimiter newline?
 
   BlockQuote = block_quote_delimiter newline
                (~block_quote_delimiter (line | BlankLine))*
@@ -174,14 +186,15 @@ AsciiDoc {
     | UnconstrainedItalic
     | UrlMacro
 
-  InlineElementOrPlainText = InlineElement | plaintext
+  InlineElementOrText = InlineElement | any_non_newline
 
-  plaintext = (~inlineelstart ~newline ~httpscheme any)+
+  any_non_newline = (~newline any)+
+  // plaintext = (~inlineelstart ~newline ~httpscheme any)+
 
-  ConstrainedBold = "*" (~"*" InlineElementOrPlainText)+ "*"
+  ConstrainedBold = "*" (~"*" InlineElementOrText)+ "*"
   UnconstrainedBold = "*" ConstrainedBold "*"
 
-  UnconstrainedItalic = "_" (~"_" InlineElementOrPlainText)+ "_"
+  UnconstrainedItalic = "_" (~"_" InlineElementOrText)+ "_"
   ConstrainedItalic = "_" UnconstrainedItalic "_"
 
   MonospaceText = "`" (~"`" any)+ "`"
@@ -220,7 +233,56 @@ AsciiDoc {
 
   Digits = digit+
 
+  backslash = "\\"
+  space_backslash = " " backslash
   newline = "\n" | "\r" | "\r\n"
   space := " " --space
     | "\t" --tab
+
+  FenceGeneric<delim, content> = delim newline content newline delim
+
+  table_fence_variant_1_pipe = "|==="
+  table_fence_variant_2_comma = ",==="
+  table_fence_variant_3_colon = ":==="
+  table_fence_variant_4_bang = "!==="
+  FenceTable =
+    | FenceGeneric<table_fence_variant_1_pipe, Fencable<table_fence_variant_1_pipe>>
+    | FenceGeneric<table_fence_variant_2_comma, Fencable<table_fence_variant_2_comma>>
+    | FenceGeneric<table_fence_variant_3_colon, Fencable<table_fence_variant_3_colon>>
+    | FenceGeneric<table_fence_variant_4_bang, Fencable<table_fence_variant_4_bang>>
+
+
+  FenceOpen = FenceGeneric<"--", Fencable<"--">>
+
+  FenceOfDelim4To7<delim> =
+    | FenceGeneric<of_7<delim>, Fencable<of_7<delim>>> -- fenced7
+    | FenceGeneric<of_6<delim>, Fencable<of_6<delim>>> -- fenced6
+    | FenceGeneric<of_5<delim>, Fencable<of_5<delim>>> -- fenced5
+    | FenceGeneric<of_4<delim>, Fencable<of_4<delim>>> -- fenced4
+
+  FenceDot = FenceOfDelim4To7<".">
+  FenceUnder = FenceOfDelim4To7<"_">
+  FenceDash = FenceOfDelim4To7<"-">
+  FenceEq = FenceOfDelim4To7<"=">
+  FenceStar = FenceOfDelim4To7<"*">
+  FenceSlash = FenceOfDelim4To7<"/">
+  FencePlus = FenceOfDelim4To7<"+">
+  Fence =
+    | FenceUnder -- Under
+    | FenceDot -- Dot
+    | FenceDash -- Dash
+    | FenceEq -- Eq
+    | FenceStar -- Star
+    | FenceSlash -- Slash
+    | FencePlus -- Plus
+    | FenceOpen -- Open
+    | FenceTable -- Table
+
+  of_2<x> = x x
+  of_3<x> = x of_2<x>
+  of_4<x> = x of_3<x>
+  of_5<x> = x of_4<x>
+  of_6<x> = x of_5<x>
+  of_7<x> = x of_6<x>
+  of_8<x> = x of_7<x>
 }
