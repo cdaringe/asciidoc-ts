@@ -18,7 +18,11 @@ const sortTransformer =
           return aName.localeCompare(bName);
         });
 
-        return ts.factory.updateObjectLiteralExpression(node, properties);
+        const nextNode = ts.factory.updateObjectLiteralExpression(
+          node,
+          properties,
+        );
+        return ts.visitEachChild(nextNode, visit, context);
       }
       return ts.visitEachChild(node, visit, context);
     }
@@ -51,4 +55,9 @@ function processFile(filePath: string) {
   log(`processed: ${filePath}`);
 }
 
-globSync("./src/*.ts").forEach(processFile);
+globSync("./src/*.ts")
+  /**
+   * @warn DEBUG ONLY
+   */
+  // .filter((it) => it.match(/foo/))
+  .forEach(processFile);

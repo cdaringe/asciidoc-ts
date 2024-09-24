@@ -23,9 +23,9 @@ AsciiDoc {
     | BlockStructure<Fence> -- blockf
     | BlockStructure<NonFencable>  -- blocknf
 
-  BlockAnchor = "[[" anchorId anchorReftext?  "]]" newline
-  anchorId = (~"]" ~"," any)+
-  anchorReftext = "," (~"]]" any)*
+  BlockAnchor = "[[" anchor_id anchor_reftext?  "]]" newline
+  anchor_id = (~"]" ~"," any)+
+  anchor_reftext = "," (~"]]" any)*
   BlockMetaData = block_title? AttributeList newline
   block_title = "." ~space (~newline any)* newline
 

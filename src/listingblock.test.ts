@@ -81,7 +81,7 @@ ok
     }
   `);
 });
-test("BlockCode", async ({ expect }) => {
+test("BlockSource", async ({ expect }) => {
   const input = `
 [source, js]
 ----
@@ -111,7 +111,7 @@ bar();
               },
             ],
           },
-          "type": "BlockCode",
+          "type": "BlockSource",
         },
       ],
       "type": "Document",

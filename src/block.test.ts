@@ -109,7 +109,7 @@ function hello() {
               },
             ],
           },
-          "type": "BlockCode",
+          "type": "BlockSource",
         },
       ],
       "type": "Document",
