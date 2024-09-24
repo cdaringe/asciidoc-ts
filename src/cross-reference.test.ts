@@ -1,7 +1,7 @@
-import { test } from 'vitest'
-import { toAST } from './mod.js'
+import { test } from "vitest";
+import { toAST } from "./mod.js";
 
-test('Cross-references - internal', async ({ expect }) => {
+test("Cross-references - internal", async ({ expect }) => {
   const input = `
 = Document Title
 
@@ -21,7 +21,7 @@ Here's a reference to <<_subsection_2_1>>.
 
 This is a subsection.
 `.trim();
-  const result = toAST(input)
+  const result = toAST(input);
   expect(result).toMatchInlineSnapshot(`
     {
       "blocks": [
@@ -139,10 +139,10 @@ This is a subsection.
       ],
       "type": "Document",
     }
-  `)
-})
+  `);
+});
 
-test('Cross-references - with custom text', async ({ expect }) => {
+test("Cross-references - with custom text", async ({ expect }) => {
   const input = `
 = Document Title
 
@@ -157,7 +157,7 @@ For more details, see <<conclusion,the conclusion of this document>>.
 As mentioned in <<introduction,the introduction>>, this is the end of the document.
 `.trim();
 
-  const result = toAST(input)
+  const result = toAST(input);
   expect(result).toMatchInlineSnapshot(`
     {
       "blocks": [
@@ -238,10 +238,10 @@ As mentioned in <<introduction,the introduction>>, this is the end of the docume
       ],
       "type": "Document",
     }
-  `)
-})
+  `);
+});
 
-test('Cross-references - to non-section elements', async ({ expect }) => {
+test("Cross-references - to non-section elements", async ({ expect }) => {
   const input = `
 reference to <<table-1>>.
 
@@ -252,7 +252,7 @@ reference to <<table-1>>.
 | Data 1   |
 |===
 `.trim();
-  const result = toAST(input)
+  const result = toAST(input);
   expect(result).toMatchInlineSnapshot(`
     {
       "blocks": [
@@ -306,5 +306,5 @@ reference to <<table-1>>.
       ],
       "type": "Document",
     }
-  `)
-})
+  `);
+});

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { test } from "vitest";
 import { toAST } from "./mod.js";
 
 test("Admonition - basic", async ({ expect }) => {

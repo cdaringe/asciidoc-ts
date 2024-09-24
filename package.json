@@ -6,11 +6,23 @@
   "type": "module",
   "foo": "bar",
   "scripts": {
-    "test": "vitest"
+    "test": "vitest",
+    "format": "wireit"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/cdaringe/asciidoc-ts.git"
+  },
+  "wireit": {
+    "format:eslint": {
+      "command": "eslint --fix ./src/**/*.ts"
+    },
+    "format": {
+      "dependencies": [
+        "format:eslint"
+      ],
+      "command": "eslint --fix ./src/**/*.ts"
+    }
   },
   "keywords": [
     "asciidoc",
@@ -32,9 +44,17 @@
     "ohm-js": "^17.1.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "3.1.0",
+    "@eslint/js": "^9.11.1",
+    "@types/eslint__js": "^8.42.3",
+    "eslint": "^9.11.1",
+    "eslint-plugin-typescript-sort-keys": "3.2.0",
+    "eslint-plugin-unused-imports": "4.1.4",
     "ts-node": "10.9.2",
     "tsx": "4.19.1",
     "typescript": "5.6.2",
-    "vitest": "2.1.1"
+    "typescript-eslint": "^8.7.0",
+    "vitest": "2.1.1",
+    "wireit": "0.14.9"
   }
 }
