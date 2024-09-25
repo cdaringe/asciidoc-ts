@@ -14,6 +14,7 @@ and as necessary in the political world as storms in the physical."
           "citation": "Thomas Jefferson, Papers of Thomas Jefferson: Volume 11",
           "content": "I hold it that a little rebellion now and then is a good thing,
     and as necessary in the political world as storms in the physical.",
+          "context": "quote",
           "type": "BlockQuotedParagraph",
         },
       ],

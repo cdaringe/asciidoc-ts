@@ -4,12 +4,20 @@ Grammar, parser, printer for https://docs.asciidoctor.org/[asciidoc].
 
 WARNING: The grammar does not follow asciidoc perfectly, but gets you 99% there.
 
+== Overview
+
+* An asciidoc is a a collection of top-level https://docs.asciidoctor.org[attributes] and blocks.
+* The https://docs.asciidoctor.org/asciidoc/latest/blocks/#content-model[content model] is generally respected and modeled in the AST
+
 == ToDo
 
-* Improve AST types for well-known attributes. Many position attributes correlate to concrete things, but aren't modeled. For example `[quote, Albert Einstein]` are just two generic `Attribute`s, but the second could be a `AttributeAuthor` or similar.
+* `.toAST()` is not adequately typed. Update to never call it. Instead, call helpers that assert over the return type of toAST()... and only use those!
+* Improve AST types for well-known attributes. Many position attributes correlate to concrete behavior, but aren't modeled. For example `[quote, Albert Einstein]` are just two generic `Attribute`s, but the second could be a `AttributeAuthor` or similar.
+* Detect float context when when BlockHeader* is parsed
 
 == Known Issues
 
+* Compound blocks
 * List levels. No fancy list marker switching yields nesting behavior changes.
 * Escaped list marker: https://docs.asciidoctor.org/asciidoc/latest/lists/ordered/#escaping-the-list-marker
 * block masquerading https://docs.asciidoctor.org/asciidoc/latest/blocks/masquerading/

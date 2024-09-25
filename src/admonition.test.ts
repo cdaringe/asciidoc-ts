@@ -1,7 +1,8 @@
 import { test } from "vitest";
 import { toAST } from "./mod.js";
 test("BlockAdmonition - basic", async ({ expect }) => {
-  const input = `NOTE: This is an admonition.`;
+  const input = `NOTE: This is an admonition.
+`;
   const result = toAST(input);
   expect(result).toMatchInlineSnapshot(`
     {
@@ -9,6 +10,7 @@ test("BlockAdmonition - basic", async ({ expect }) => {
         {
           "admonitionType": "NOTE",
           "content": "This is an admonition.",
+          "context": "admonition",
           "type": "Admonition",
         },
       ],

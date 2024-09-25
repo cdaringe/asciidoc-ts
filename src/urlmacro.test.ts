@@ -24,6 +24,7 @@ test("Parse URL Macro", async ({ expect }) => {
               "url": "https://example.com",
             },
           ],
+          "context": "paragraph",
           "type": "Paragraph",
         },
       ],

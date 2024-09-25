@@ -31,7 +31,8 @@ AsciiDoc {
 
   NonFencable =
     | Header
-    | BlockHeaderSetext
+    | BlockSectionSetext
+    | BlockAdmonition
     | BlockQuotedParagraph
     | BlockImage
     | BlockList
@@ -41,16 +42,16 @@ AsciiDoc {
     | BlockParagraph
     | newline
 
-  BlockContentino<delim> = newline? (~delim InlineElementOrText)+ BlockContentino<delim>?
+  BlockContentGeneric<delim> = newline? (~delim InlineElementOrText)+ BlockContentGeneric<delim>?
 
   Fencable<delim> =
-  | BlockTable
-  | BlockQuote
   | BlockAdmonition
-  | BlockSidebar
-  | BlockPassthrough
-  | BlockComment
-  | BlockContentino<delim>
+  | BlockTable
+  | BlockContentGeneric<delim>
+  // | BlockQuote -- AST only
+  // | BlockComment -- AST only
+  // | BlockSidebar -- AST only
+  // | BlockPassthrough -- AST only
 
   doublequote = "\""
 
@@ -77,7 +78,7 @@ AsciiDoc {
   EndOfFile = newline? end  // Allow optional newline at end of file
   SingleLineText = InlineElement+ newline?
 
-  BlockHeaderSetext = HeaderTextSetext HeaderUnderlineSetext BlankLine*
+  BlockSectionSetext = HeaderTextSetext HeaderUnderlineSetext BlankLine*
   HeaderTextSetext = line
   HeaderUnderlineSetext = (("=" | "-")+ newline) | (("=" | "-")+ end)
 
@@ -121,36 +122,16 @@ AsciiDoc {
 
   DescriptionContent = line+
 
-  BlockQuote = block_quote_delimiter newline
-               (~block_quote_delimiter (line | BlankLine))*
-               block_quote_delimiter newline
-  block_quote_delimiter = "____"
-
-  BlockTable = TableDelimiter TableAttributes? newline
-          TableRow+
-          TableDelimiter newline
-  TableDelimiter = "|==="
-  TableAttributes = "[" listOf<TableAttribute, ","> "]"
-  TableAttribute = ColsAttribute | HeaderOption
-  ColsAttribute = "cols" "=" Digits
-  HeaderOption = "header"
+  BlockTable = TableRow+
   TableRow = "|" TableCell ("|" TableCell)* newline
   TableCell = InlineElement+
 
   BlockHorizontalRule = "'''" newline
 
-  BlockAdmonition = AdmonitionType admonitionContent+
-  admonitionContent = (~newline any)+
+  BlockAdmonition = AdmonitionType any_non_newline+
   AdmonitionType = "NOTE:" | "TIP:" | "IMPORTANT:" | "WARNING:" | "CAUTION:"
 
-  BlockSidebar = SidebarDelimiter newline
-            (line | BlankLine)*
-            SidebarDelimiter newline
-  SidebarDelimiter = "****"
 
-  BlockPassthrough = PassthroughDelimiter newline
-                     (line | BlankLine)*
-                     PassthroughDelimiter newline
   PassthroughDelimiter = "++++"
 
   BlockMacro = MacroName "::" MacroTarget? AttributeList? newline
@@ -165,9 +146,6 @@ AsciiDoc {
   AttributeName = (~":" any)+
   AttributeValue = (~InlineElement any)*
 
-  BlockComment = comment_delimiter newline
-                 (~comment_delimiter any)*
-                 comment_delimiter newline
   comment_delimiter = "////"
 
   InlineElement =

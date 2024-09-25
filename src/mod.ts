@@ -19,28 +19,70 @@ interface BlockAnchor {
   reftext?: string;
   type: "BlockAnchor";
 }
+/**
+ * https://docs.asciidoctor.org/asciidoc/latest/blocks/#summary-of-built-in-contexts
+ */
 type BlockContext =
   | "admonition"
-  | "comment"
-  | "descriptionlist"
+  | "audio"
+  | "colist"
+  | "dlist"
+  | "document"
   | "example"
-  | "header"
-  | "horizontalrule"
-  | "list"
+  | "floating_title"
+  | "image"
+  | "list_item"
   | "listing"
-  | "macro"
+  | "literal"
+  | "olist"
+  | "open"
+  | "page_break"
   | "paragraph"
-  | "passthrough"
+  | "pass"
+  | "preamble"
   | "quote"
+  | "section"
   | "sidebar"
-  | "source"
+  | "table"
+  | "table_cell"
+  | "thematic_break"
+  | "toc"
+  | "ulist"
+  | "verse"
+  | "video"
+  // semi-std
+  // not listed by asciidoc as std, but referred to as std
+  | "abstract"
+  | "partintro"
+  // non-std
+  | "blank_line"
+  | "comment"
+  | "macro"
+  | "unknown";
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/blocks/#content-model
+ */
+type BlockModel =
+  | "compound"
+  | "simple"
+  | "verbatim"
+  | "raw"
+  | "empty"
   | "table"
   | "unknown";
-interface BlockBase<C extends BlockContext> {
+interface BlockBase<C extends BlockContext, M extends BlockModel> {
   anchor?: BlockAnchor;
   metadata?: BlockMetaData;
   delimiter?: string;
   context: C;
+  content: M extends "compound" ? Block[]
+    : M extends "simple" ? ((InlineElement | PlainText)[])
+    : M extends "verbatim" ? string
+    : M extends "raw" ? string
+    : M extends "empty" ? undefined
+    : M extends "table" ? TableRow[]
+    : M extends "unknown" ? unknown
+    : never;
 }
 /**
  * https://docs.asciidoctor.org/asciidoc/latest/blocks/
@@ -53,53 +95,87 @@ interface BlockMetaData {
   title?: string;
 }
 type Block =
-  | BlockHeaderSetext
-  | BlockHeader
+  | BlockSectionSetext
+  | BlockSection
   | BlockParagraph
-  | BlockUnorderedList
+  | BlockList
   | BlockOrderedList
   | BlockDescriptionList
   | BlockListing
-  | BlockQuote
   | BlockTable
   | BlockHorizontalRule
+  | BlockExample
   | BlockAdmonition
-  | BlockSidebar
-  | BlockPassthrough
   | BlockMacro
+  | BlankLine
+  | BlockPassthrough
+  | BlockQuote
+  | BlockSidebar
   | BlockComment
-  | BlankLine;
-type BlockStructure = Block;
-interface BlockHeaderSetext extends BlockBase<"header"> {
-  content: string;
+  | BlockLiteral;
+type BlockStructure = Block extends {
+  content: any;
+} ? Block
+  : never;
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/sections/titles-and-levels/
+ * @warn Counter to the documentation, we model the section as simple vs compound, and the header is itself the content.
+ */
+interface BlockSectionSetext extends BlockBase<"section", "empty"> {
   level: 1 | 2;
   type: "HeaderSetext";
 }
-interface BlockHeader extends BlockBase<"header"> {
-  content: string;
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/sections/titles-and-levels/
+ * @warn Counter to the documentation, we model the section as simple vs compound, and the header is itself the content.
+ */
+interface BlockSection extends BlockBase<"section", "empty"> {
   level: 1 | 2 | 3 | 4 | 5 | 6;
   type: "Header";
 }
-interface BlockParagraph extends BlockBase<"paragraph"> {
-  content: (InlineElement | PlainText)[];
+interface BlockParagraph extends BlockBase<"paragraph", "simple"> {
   type: "Paragraph";
+}
+interface BlockAbstract extends BlockBase<"abstract", "simple"> {
+  type: "BlockAbstract";
+}
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/sections/parts/#part-intro
+ */
+interface BlockPartintro extends BlockBase<"partintro", "simple"> {
+  type: "BlockPartintro";
+}
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/pass/pass-block/
+ */
+interface BlockPassthrough extends BlockBase<"pass", "verbatim"> {
+  type: "BlockPassthrough";
+}
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/verbatim/literal-blocks/
+ */
+interface BlockLiteral extends BlockBase<"literal", "verbatim"> {
+  type: "BlockLiteral";
 }
 interface ParagraphSegment {
   content: InlineElement[];
   type: "ParagraphSegment";
 }
-interface BlockUnorderedList extends BlockBase<"list"> {
-  items: UnorderedListItem[];
-  type: "UnorderedList";
+interface BlockList
+  extends Omit<BlockBase<"dlist" | "olist" | "ulist", "simple">, "content"> {
+  content: ListItem[];
+  type: "BlockList";
+  ordered: boolean;
 }
-interface UnorderedListItem {
+interface ListItem {
   content: InlineElement[];
   depth: number;
-  type: "UnorderedListItem";
+  type: "ListItem";
 }
-interface BlockOrderedList extends BlockBase<"list"> {
+interface BlockOrderedList
+  extends Omit<BlockBase<"olist", "simple">, "content"> {
   attributes?: AttributeEntry[];
-  items: OrderedListItem[];
+  content: OrderedListItem[];
   type: "OrderedList";
 }
 interface OrderedListItem {
@@ -107,8 +183,9 @@ interface OrderedListItem {
   depth: number;
   type: "OrderedListItem";
 }
-interface BlockDescriptionList extends BlockBase<"list"> {
-  items: DescriptionListItem[];
+interface BlockDescriptionList
+  extends Omit<BlockBase<"dlist", "simple">, "content"> {
+  content: DescriptionListItem[];
   type: "DescriptionList";
 }
 interface DescriptionListItem {
@@ -116,58 +193,60 @@ interface DescriptionListItem {
   term: string;
   type: "DescriptionListItem";
 }
-/** */
-interface BlockListing extends BlockBase<"listing"> {
-  content: string;
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/verbatim/listing-blocks/
+ */
+interface BlockListing extends BlockBase<"listing", "verbatim"> {
   delimited?: boolean;
   type: "BlockListing";
 }
-interface BlockSource extends BlockBase<"source"> {
-  content: string;
-  metadata: {
-    attributes: [
-      AttributeEntry<"source">,
-      ...AttributeEntry[],
-    ];
-  };
+interface BlockSource extends BlockBase<"listing", "verbatim"> {
   type: "BlockSource";
 }
-interface BlockQuote extends BlockBase<"quote"> {
-  content: Block[];
+interface BlockQuote extends BlockBase<"quote", "simple"> {
   type: "BlockQuote";
 }
-interface BlockTable extends BlockBase<"table"> {
-  attributes: string | null;
-  rows: TableRow[];
-  type: "Table";
+interface BlockTable extends BlockBase<"table", "table"> {
+  type: "BlockTable";
 }
 interface TableRow {
-  cells: TableCell[];
+  content: TableCell[];
   type: "TableRow";
 }
 interface TableCell {
   content: InlineElement[];
   type: "TableCell";
 }
-interface BlockHorizontalRule extends BlockBase<"horizontalrule"> {
+interface BlockHorizontalRule extends BlockBase<"thematic_break", "empty"> {
   type: "HorizontalRule";
 }
-interface BlockAdmonition extends BlockBase<"admonition"> {
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/blocks/admonitions/
+ */
+interface BlockAdmonition extends BlockBase<"admonition", "simple"> {
   admonitionType: "NOTE" | "TIP" | "IMPORTANT" | "WARNING" | "CAUTION";
-  content: Block[];
   type: "Admonition";
 }
-interface BlockSidebar extends BlockBase<"sidebar"> {
-  content: Block[];
-  type: "Sidebar";
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/blocks/sidebars/
+ */
+interface BlockSidebar extends BlockBase<"sidebar", "simple"> {
+  type: "BlockSidebar";
 }
-interface BlockPassthrough extends BlockBase<"passthrough"> {
-  content: string;
-  type: "BlockPassthrough";
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/blocks/verses/
+ */
+interface BlockVerse extends BlockBase<"verse", "simple"> {
+  type: "BlockVerse";
 }
-interface BlockMacro extends BlockBase<"macro"> {
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/verbatim/literal-blocks/
+ */
+interface BlockLiteral extends BlockBase<"literal", "verbatim"> {
+  type: "BlockLiteral";
+}
+interface BlockMacro extends BlockBase<"macro", "verbatim"> {
   attributes?: string;
-  content: string;
   name: string;
   target?: string;
   type: "BlockMacro";
@@ -177,32 +256,34 @@ interface AttributeEntry<Name extends string = string> {
   type: "AttributeEntry";
   value?: string;
 }
-interface BlockComment extends BlockBase<"comment"> {
-  content: string;
+interface BlockComment extends BlockBase<"comment", "verbatim"> {
   type: "BlockComment";
 }
 interface SingleLineText {
   content: InlineElement[];
   type: "SingleLineText";
 }
-interface BlankLine {
+interface BlankLine extends BlockBase<"blank_line", "empty"> {
   type: "BlankLine";
 }
+interface BlockExample extends BlockBase<"example", "simple"> {
+  type: "BlockExample";
+}
 type InlineElement =
-  | PlainText
+  | AttributeReference
   | ConstrainedBold
-  | UnconstrainedBold
   | ConstrainedItalic
-  | UnconstrainedItalic
-  | MonospaceText
-  | Link
-  | InlineImage
-  | Footnote
   | CrossReference
+  | Footnote
+  | InlineImage
   | InlinePassthrough
+  | Link
+  | MonospaceText
+  | PlainText
   | SubscriptText
   | SuperscriptText
-  | AttributeReference;
+  | UnconstrainedBold
+  | UnconstrainedItalic;
 interface PlainText {
   content: string;
   type: "PlainText";
@@ -249,11 +330,6 @@ interface Footnote {
   text: InlineElement[];
   type: "Footnote";
 }
-interface BlockExample extends BlockBase<"example"> {
-  content: string;
-  delimited: boolean;
-  type: "BlockExample";
-}
 interface CrossReference {
   id: string;
   text: string | null;
@@ -275,9 +351,8 @@ interface AttributeReference {
   name: string;
   type: "AttributeReference";
 }
-interface BlockQuotedParagraph extends BlockBase<"quote"> {
+interface BlockQuotedParagraph extends BlockBase<"quote", "simple"> {
   citation: string;
-  content: string;
   type: "BlockQuotedParagraph";
 }
 interface UrlMacro {
@@ -304,6 +379,9 @@ export const toAST = (input: string): Document => {
     },
     anchor_reftext(_comma, text) {
       return text.sourceString;
+    },
+    any_non_newline(content) {
+      return content.sourceString;
     },
     AttributeEntry(_, name, __, value, _newline) {
       return {
@@ -335,10 +413,16 @@ export const toAST = (input: string): Document => {
       } satisfies AttributeReference;
     },
     BlankLine(_spaces, _newline) {
-      return { type: "BlankLine" } satisfies BlankLine;
+      return {
+        content: undefined,
+        context: "blank_line",
+        type: "BlankLine",
+      } satisfies BlankLine;
     },
     Block(blockStructureNode) {
-      const blockStructureAst = blockStructureNode.toAST();
+      const blockStructureAst = blockStructureNode.toAST() as BlockStructure;
+      const nextBlock = rewireBlock(blockStructureAst);
+      return nextBlock;
     },
     block_title(_, bt, __) {
       return bt.toAST();
@@ -365,32 +449,13 @@ export const toAST = (input: string): Document => {
         type: "BlockAnchor",
       } satisfies BlockAnchor;
     },
-    BlockComment(_open, _nl1, content, _close, _nl3) {
-      return {
-        content: content.sourceString,
-        context: "comment",
-        type: "BlockComment",
-      } satisfies BlockComment;
+    BlockContentGeneric(_nl, content1, contentN) {
+      return [content1.toAST(), ...(contentN.toAST() || [])];
     },
-    BlockExample(_open, _nl1, content, _nl2, _close, _nl3) {
+    BlockHorizontalRule(rule, _newline) {
       return {
-        content: content.sourceString,
-        context: "example",
-        delimited: true,
-        type: "BlockExample",
-      } satisfies BlockExample;
-    },
-    BlockHeaderSetext(text, underline, _) {
-      return {
-        content: text.sourceString.trim(),
-        context: "header",
-        level: underline.sourceString[0] === "=" ? 1 : 2,
-        type: "HeaderSetext",
-      } satisfies BlockHeaderSetext;
-    },
-    BlockHorizontalRule(_rule, _newline) {
-      return {
-        context: "horizontalrule",
+        content: rule.toAST(),
+        context: "thematic_break",
         type: "HorizontalRule",
       } satisfies BlockHorizontalRule;
     },
@@ -402,14 +467,14 @@ export const toAST = (input: string): Document => {
         type: "BlockImage",
       } satisfies BlockImage;
     },
-    BlockListingDelimited(_d1, _nl1, content, _d2, _newline2) {
-      return {
-        content: content.sourceString.trim(),
-        context: "listing",
-        delimited: true,
-        type: "BlockListing",
-      } satisfies BlockListing;
-    },
+    // BlockListingDelimited(_d1, _nl1, content, _d2, _newline2) {
+    //   return {
+    //     content: content.sourceString.trim(),
+    //     context: "listing",
+    //     delimited: true,
+    //     type: "BlockListing",
+    //   } satisfies BlockListing;
+    // },
     BlockMacro(name, _, target, attrs, _newline, content, _close, _newline2) {
       return {
         ...truthyValuesOrEmptyPojo({ target: target.sourceString }),
@@ -442,20 +507,20 @@ export const toAST = (input: string): Document => {
         type: "Paragraph",
       } satisfies BlockParagraph;
     },
-    BlockPassthrough(_open, _newline, content, _close, _newline2) {
-      return {
-        content: content.sourceString,
-        context: "passthrough",
-        type: "BlockPassthrough",
-      } satisfies BlockPassthrough;
-    },
-    BlockQuote(_open, _newline, content, _close, _newline2) {
-      return {
-        content: content.toAST(),
-        context: "quote",
-        type: "BlockQuote",
-      } satisfies BlockQuote;
-    },
+    // BlockPassthrough(_open, _newline, content, _close, _newline2) {
+    //   return {
+    //     content: content.sourceString,
+    //     context: "passthrough",
+    //     type: "BlockPassthrough",
+    //   } satisfies BlockPassthrough;
+    // },
+    // BlockQuote(_open, _newline, content, _close, _newline2) {
+    //   return {
+    //     content: content.toAST(),
+    //     context: "quote",
+    //     type: "BlockQuote",
+    //   } satisfies BlockQuote;
+    // },
     BlockQuotedParagraph(
       _open,
       content,
@@ -468,19 +533,28 @@ export const toAST = (input: string): Document => {
       // BlockQuotedParagraph = '"' (~'"' any)* '"' newline "--" plaintext? newline
       return {
         citation: citation.sourceString,
-        content: content.sourceString,
+        content: content.toAST(),
         context: "quote",
         type: "BlockQuotedParagraph",
       } satisfies BlockQuotedParagraph;
     },
-    BlockSidebar(_open, _newline, content, _close, _newline2) {
+    BlockSectionSetext(text, underline, _) {
       return {
-        content: content.toAST(),
-        context: "sidebar",
-        type: "Sidebar",
-      } satisfies BlockSidebar;
+        content: text.toAST(),
+        context: "section",
+        level: underline.sourceString[0] === "=" ? 1 : 2,
+        type: "HeaderSetext",
+      } satisfies BlockSectionSetext;
     },
+    // BlockSidebar(_open, _newline, content, _close, _newline2) {
+    //   return {
+    //     content: content.toAST(),
+    //     context: "sidebar",
+    //     type: "Sidebar",
+    //   } satisfies BlockSidebar;
+    // },
     BlockStructure(anchor, metadata, blockKind, _nl1, _nl2) {
+      // BlockStructure<t> = BlockAnchor? BlockMetaData? t newline? newline?
       const [metadataAst] = metadata.toAST() ?? [];
       const [anchorAst] = anchor.toAST() ?? [];
       const nextBlock: BlockStructure = {
@@ -499,12 +573,11 @@ export const toAST = (input: string): Document => {
       }
       return nextBlock;
     },
-    BlockTable(_open, attrs, _newline, rows, _close, _newline2) {
+    BlockTable(rows) {
       return {
-        attributes: attrs.sourceString || null,
+        content: rows.toAST(),
         context: "table",
-        rows: rows.children.map((row) => row.toAST()),
-        type: "Table",
+        type: "BlockTable",
       } satisfies BlockTable;
     },
     ConstrainedBold(_, content, __) {
@@ -528,8 +601,8 @@ export const toAST = (input: string): Document => {
     },
     DescriptionList(items) {
       return {
-        context: "list",
-        items: items.toAST(),
+        content: items.toAST(),
+        context: "dlist",
         type: "DescriptionList",
       } satisfies BlockDescriptionList;
     },
@@ -555,6 +628,12 @@ export const toAST = (input: string): Document => {
         type: "Document",
       } satisfies Document;
     },
+    FenceGeneric(delim1, _nl1, content, _nl2, _delim2) {
+      return {
+        content: content.toAST(),
+        delimiter: delim1.sourceString,
+      };
+    },
     Footnote(_, id, __, text, ___) {
       return {
         id: id.sourceString || null,
@@ -565,10 +644,10 @@ export const toAST = (input: string): Document => {
     Header(marker, content, _maybeNewline) {
       return {
         content: content.toAST(),
-        context: "header",
+        context: "section",
         level: marker.sourceString.length as 1 | 2 | 3 | 4 | 5 | 6,
         type: "Header",
-      } satisfies BlockHeader;
+      } satisfies BlockSection;
     },
     ImageDims(width, _comma, height) {
       const widthNum = width.sourceString
@@ -632,8 +711,8 @@ export const toAST = (input: string): Document => {
     },
     OrderedList(items) {
       return {
-        context: "list",
-        items: normalizeDepth(items.toAST() as OrderedListItem[]),
+        content: normalizeDepth(items.toAST() as OrderedListItem[]),
+        context: "olist",
         type: "OrderedList",
       } satisfies BlockOrderedList;
     },
@@ -652,12 +731,12 @@ export const toAST = (input: string): Document => {
         type: "ParagraphSegment",
       } satisfies ParagraphSegment;
     },
-    plaintext(content) {
-      return {
-        content: content.sourceString,
-        type: "PlainText",
-      } satisfies PlainText;
-    },
+    // plaintext(content) {
+    //   return {
+    //     content: content.sourceString,
+    //     type: "PlainText",
+    //   } satisfies PlainText;
+    // },
     SingleLineText(content, _newline) {
       return {
         content: content.toAST(),
@@ -683,9 +762,8 @@ export const toAST = (input: string): Document => {
       } satisfies TableCell;
     },
     TableRow(_marker, cells, _markers, _newline, _hmmwrong) {
-      debugger; // eslint-disable-line
       return {
-        cells: cells.children.map((cell) => cell.toAST()),
+        content: cells.toAST(),
         type: "TableRow",
       } satisfies TableRow;
     },
@@ -703,17 +781,18 @@ export const toAST = (input: string): Document => {
     },
     UnorderedList(items) {
       return {
-        context: "list",
-        items: normalizeDepth(items.toAST() as UnorderedListItem[]),
-        type: "UnorderedList",
-      } satisfies BlockUnorderedList;
+        content: normalizeDepth(items.toAST() as ListItem[]),
+        context: "ulist",
+        ordered: true,
+        type: "BlockList",
+      } satisfies BlockList;
     },
     UnorderedListItem(marker, content, _nl) {
       return {
         content: content.toAST(),
         depth: marker.sourceString.length,
-        type: "UnorderedListItem",
-      } satisfies UnorderedListItem;
+        type: "ListItem",
+      } satisfies ListItem;
     },
     UrlMacro(scheme, _colon, url, attributes) {
       return {
@@ -731,24 +810,6 @@ export const toAST = (input: string): Document => {
     throw new Error(`Parsing failed ${matchResult.message}`);
   }
 };
-if (getEnvVar("DUMP_GRAMMAR")) {
-  console.log(grammarString);
-} else if (getEnvVar("DUMP_AST")) {
-  const input = `= Header
-  Some paragraph text
-
-  * Item 1
-  **Bold text**
-  *Italic text*
-  1. Ordered Item
-
-  | Cell 1 | Cell 2 |
-  | Cell 3 | Cell 4 |
-
-  Macro::[arg,arg2]`;
-  const out = toAST(input);
-  console.log(JSON.stringify(out.blocks, null, 2));
-}
 const maybeBlockPromoteToCode = (
   listingBlock: BlockListing,
 ): BlockListing | BlockSource => {
@@ -759,12 +820,6 @@ const maybeBlockPromoteToCode = (
   if (metadata.attributes?.[0]?.name === "source") {
     return {
       ...listingBlock,
-      context: "source",
-      metadata: {
-        ...metadata,
-        attributes: metadata
-          .attributes as BlockSource["metadata"]["attributes"],
-      },
       type: "BlockSource",
     } as BlockSource;
   }
@@ -791,3 +846,132 @@ const truthyValuesOrEmptyPojo = <T extends Record<string, any>>(
   }
   return it;
 };
+const rewireBlock = <B extends Partial<Block>>(block: B): B => {
+  const attrContext = block.metadata?.attributes?.[0]?.name;
+  const nextBlock = rewireForDefaultContext(block);
+  const finalBlock = attrContext
+    ? rewireBlockForMasquerading(nextBlock, attrContext)
+    : block;
+  return finalBlock;
+};
+const contextByMarker: Record<string, BlockContext> = {
+  "_": "quote",
+  "-": "listing",
+  ".": "literal",
+  "*": "sidebar",
+  "/": "comment",
+  "+": "pass",
+  "=": "example",
+} as const;
+const blockTypeByMarker: Record<string, Block["type"]> = {
+  "_": "BlockQuote",
+  "-": "BlockListing",
+  ".": "BlockLiteral",
+  "*": "BlockSidebar",
+  "/": "BlockComment",
+  "+": "BlockPassthrough",
+  "=": "BlockExample",
+} as const;
+const rewireForDefaultContext = <B extends Partial<Block>>(block: B): B => {
+  const delimiterChar = block.delimiter?.slice(
+    0,
+    1,
+  ) as keyof typeof contextByMarker;
+  const defaultContext = contextByMarker[delimiterChar];
+  const defaultBlockType = blockTypeByMarker[delimiterChar];
+  const blockStyle = block.metadata?.attributes?.[0]?.name;
+  if (!defaultContext || !defaultBlockType) {
+    if (!block.context) {
+      throw new Error(`impossible case: missing context for block}`);
+    }
+    return block;
+  }
+  const blk = block as {
+    context: BlockContext;
+    type: Block["type"];
+  };
+  const isMissingContext = !blk.context;
+  if (isMissingContext) {
+    blk.context = defaultContext;
+    blk.type = defaultBlockType;
+  }
+  const isUsingBlockStyleMasquerade = blockStyle &&
+    blockStyle !== blk.context && blockStyle !== defaultContext;
+  if (isUsingBlockStyleMasquerade) {
+    blk.context = blockStyle as BlockContext;
+  }
+  return block;
+};
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/blocks/masquerading/#built-in-permutations
+ */
+const masqueradingFromTo = {
+  example: ["admonition"],
+  listing: ["literal"],
+  literal: ["listing"],
+  open: [
+    "abstract",
+    "admonition",
+    "partintro",
+    "pass",
+    "quote",
+    "sidebar",
+    "verse",
+  ],
+  pass: ["stem", "latexmath", "asciimath"],
+  quote: ["verse"],
+};
+/**
+ * This is a mapping of block types to their attributes, used
+ * strictly for the purpose of masquerading.
+ */
+const blocksAttrsByContext = {
+  abstract: { context: "abstract", type: "BlockAbstract" } as Partial<
+    BlockAbstract
+  >,
+  admonition: { context: "admonition", type: "Admonition" } as Partial<
+    BlockAdmonition
+  >,
+  listing: { context: "listing", type: "BlockListing" } as Partial<
+    BlockListing
+  >,
+  literal: { context: "literal", type: "BlockLiteral" } as Partial<
+    BlockLiteral
+  >,
+  partintro: { context: "partintro", type: "BlockPartintro" } as Partial<
+    BlockPartintro
+  >,
+  pass: { context: "pass", type: "BlockPassthrough" } as Partial<
+    BlockPassthrough
+  >,
+  quote: { context: "quote", type: "BlockQuote" } as Partial<BlockQuote>,
+  sidebar: { context: "sidebar", type: "BlockSidebar" } as Partial<
+    BlockSidebar
+  >,
+  verse: { context: "verse", type: "BlockVerse" } as Partial<BlockVerse>,
+} as Record<BlockContext, Partial<BlockBase<any, any>>>;
+/**
+ * @see https://docs.asciidoctor.org/asciidoc/latest/blocks/masquerading/#built-in-permutations
+ */
+const rewireBlockForMasquerading = <B extends Partial<BlockStructure>>(
+  block: B,
+  toContext: string,
+): B => {
+  const allowed =
+    masqueradingFromTo[block.context as keyof typeof masqueradingFromTo];
+  if (!allowed) {
+    return block;
+  }
+  const nextAttrs = blocksAttrsByContext[toContext as BlockContext];
+  if (allowed.includes(toContext) && nextAttrs) {
+    return {
+      ...block,
+      ...nextAttrs,
+    } as B;
+  }
+  return block;
+};
+const nev = (_: never) => void 0;
+if (getEnvVar("DUMP_GRAMMAR")) {
+  console.log(grammarString);
+}
