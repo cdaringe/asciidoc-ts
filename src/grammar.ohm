@@ -42,7 +42,7 @@ AsciiDoc {
     | BlockParagraph
     | newline
 
-  BlockContentGeneric<delim> = newline? (~delim InlineElementOrText)+ BlockContentGeneric<delim>?
+  BlockContentGeneric<delim> = newline? InlineElementOrText<delim>+ BlockContentGeneric<delim>?
 
   Fencable<delim> =
   | BlockAdmonition
@@ -55,7 +55,7 @@ AsciiDoc {
 
   doublequote = "\""
 
-  BlockQuotedParagraph = doublequote (~doublequote any)* doublequote newline "--" any_non_newline? newline
+  BlockQuotedParagraph = doublequote BlockContentGeneric<doublequote> doublequote newline "--" (any_non_newline+)? newline
 
   LineElementStart = "="
 
@@ -91,10 +91,10 @@ AsciiDoc {
   | "==="
   | "=="
   | "="
-  HeaderContent = (~newline InlineElementOrText)+
+  HeaderContent = InlineElementOrText<newline>+
 
   BlockParagraph = (~LineElementStart) ParagraphSegment
-  ParagraphSegment = InlineElementOrText+ (BlankLine ParagraphSegment)?
+  ParagraphSegment = InlineElementOrText<end>+ (BlankLine ParagraphSegment)?
 
   BlockList = UnorderedList
        | OrderedList
@@ -102,7 +102,7 @@ AsciiDoc {
 
   UnorderedList = UnorderedListItem+
   UnorderedListItem = unordered_list_marker ListItemContent newline?
-  ListItemContent = InlineElementOrText+ (ListContinuation ListItemContent+)*
+  ListItemContent = InlineElementOrText<end>+ (ListContinuation ListItemContent+)*
   unordered_list_marker = ("*" | "-" | "•")+ space+
 
   OrderedList = OrderedListItem+
@@ -164,15 +164,17 @@ AsciiDoc {
     | UnconstrainedItalic
     | UrlMacro
 
-  InlineElementOrText = InlineElement | any_non_newline
+  InlineElementOrText<delim> = InlineElement | any_non_newline_text<delim>
 
-  any_non_newline = (~newline any)+
+  any_non_newline_text<delim> = (~delim any_non_newline)+
+
+  any_non_newline = (~newline (space | any))
   // plaintext = (~inlineelstart ~newline ~httpscheme any)+
 
-  ConstrainedBold = "*" (~"*" InlineElementOrText)+ "*"
+  ConstrainedBold = "*" InlineElementOrText<"*">+ "*"
   UnconstrainedBold = "*" ConstrainedBold "*"
 
-  UnconstrainedItalic = "_" (~"_" InlineElementOrText)+ "_"
+  UnconstrainedItalic = "_" InlineElementOrText<"_">+ "_"
   ConstrainedItalic = "_" UnconstrainedItalic "_"
 
   MonospaceText = "`" (~"`" any)+ "`"

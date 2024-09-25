@@ -10,8 +10,11 @@ best example.
     {
       "blocks": [
         {
-          "content": "best example.",
-          "delimited": true,
+          "content": [
+            "best example.",
+          ],
+          "context": "example",
+          "delimiter": "====",
           "type": "BlockExample",
         },
       ],

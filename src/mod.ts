@@ -1,15 +1,21 @@
-import { grammar as ohmGrammar } from "ohm-js";
+import { grammar as ohmGrammar, Node } from "ohm-js";
 import { getEnvVar } from "./env.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pipe } from "./fp.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const grammarFilename = path.resolve(__dirname, "grammar.ohm");
 export const grammarString = fs.readFileSync(grammarFilename, "utf8");
 export const grammar = ohmGrammar(grammarString);
 // Define types for AST nodes
-type ASTNode = Document | Block | InlineElement;
+type ASTNode =
+  | Document
+  | Block
+  | InlineElement
+  // uhhh i don't know how to categorize these Nodes yet
+  | AttributeEntry;
 interface Document {
   blocks: Block[];
   type: "Document";
@@ -70,13 +76,14 @@ type BlockModel =
   | "empty"
   | "table"
   | "unknown";
+type InlineElementOrPlainText = InlineElement | PlainText;
 interface BlockBase<C extends BlockContext, M extends BlockModel> {
   anchor?: BlockAnchor;
   metadata?: BlockMetaData;
   delimiter?: string;
   context: C;
   content: M extends "compound" ? Block[]
-    : M extends "simple" ? ((InlineElement | PlainText)[])
+    : M extends "simple" ? (InlineElementOrPlainText[])
     : M extends "verbatim" ? string
     : M extends "raw" ? string
     : M extends "empty" ? undefined
@@ -363,9 +370,49 @@ interface UrlMacro {
 }
 export const toAST = (input: string): Document => {
   const semantics = grammar.createSemantics();
+  const getCheckedASTInner = (ast: ASTNode, typ: string): ASTNode => {
+    if (typ === "any") {
+      return ast;
+    }
+    if ("type" in ast) {
+      if (ast.type === typ) {
+        return ast;
+      }
+      throw new Error(`Expected ${typ} but got ${ast.type}`);
+    }
+    if (typ === "string") {
+      if (typeof ast === "string") {
+        return ast;
+      }
+      throw new Error(
+        `expected string but got ${typeof ast} ${JSON.stringify(ast)}`,
+      );
+    }
+    throw new Error(`unhandled has ${typ} for ast ${ast}`);
+  };
+  /**
+   * @warn This is a band-aid solution to the problem of the AST not being typed
+   * on traverasal. We apply some runtime checks to ensure that the AST is well
+   * formed, which it routinely is not when concurrently developing the grammar.
+   * We can erase this during compilation or simply disable it in production.
+   */
+  const getCheckedAST = <T extends ASTNode | ASTNode[]>(
+    node: Node,
+    typ: ASTNode["type"] | "any" | "string",
+    isArray?: true,
+  ): T => {
+    const ast = node.toAST() as ASTNode;
+    if (isArray) {
+      if (Array.isArray(ast)) {
+        return ast.map((it) => getCheckedASTInner(it, typ)) as T;
+      }
+      throw new Error(`Expected array but got ${typeof ast}`);
+    }
+    return getCheckedASTInner(ast, typ) as T;
+  };
   semantics.addOperation("toAST", {
     _iter(...children) {
-      const next = children.map((child) => child.toAST());
+      const next = children.map((child) => getCheckedAST(child, "any"));
       if (
         typeof next[0] === "string" &&
         next.every((it) => typeof it === "string")
@@ -383,6 +430,12 @@ export const toAST = (input: string): Document => {
     any_non_newline(content) {
       return content.sourceString;
     },
+    any_non_newline_text(content) {
+      return {
+        type: "PlainText",
+        content: content.sourceString
+      } satisfies PlainText;
+    },
     AttributeEntry(_, name, __, value, _newline) {
       return {
         ...truthyValuesOrEmptyPojo({ value: value.sourceString.trim() }),
@@ -391,11 +444,11 @@ export const toAST = (input: string): Document => {
       } satisfies AttributeEntry;
     },
     AttributeList(_open, attrs, _close) {
-      return attrs.toAST();
+      return getCheckedAST<AttributeEntry[]>(attrs, "AttributeEntry", true);
     },
     AttributeNamed(key, _eq, value) {
       return {
-        name: key.toAST(),
+        name: getCheckedAST<PlainText>(key, "string").content,
         type: "AttributeEntry",
         value: value ? value.sourceString : undefined,
       } satisfies AttributeEntry;
@@ -420,14 +473,16 @@ export const toAST = (input: string): Document => {
       } satisfies BlankLine;
     },
     Block(blockStructureNode) {
+      // const blockStructureAst = getCheckedAST<BlockStructure>(blockStructureNode, "BlockStructure");
       const blockStructureAst = blockStructureNode.toAST() as BlockStructure;
-      const nextBlock = rewireBlock(blockStructureAst);
+      const nextBlock = toDerivedBlockType(blockStructureAst);
       return nextBlock;
     },
     block_title(_, bt, __) {
-      return bt.toAST();
+      return getCheckedAST<PlainText>(bt, "PlainText").content;
     },
     BlockAdmonition(type, content) {
+      // BlockAdmonition = AdmonitionType any_non_newline+
       return {
         admonitionType: type.sourceString.slice(0, -1) as
           | "NOTE"
@@ -435,14 +490,19 @@ export const toAST = (input: string): Document => {
           | "IMPORTANT"
           | "WARNING"
           | "CAUTION",
-        content: content.toAST(),
+        content: getCheckedAST<InlineElementOrPlainText[]>(
+          content,
+          "any",
+          true,
+        ),
         context: "admonition",
         type: "Admonition",
       } satisfies BlockAdmonition;
     },
     BlockAnchor(_open, id, reftextNode, _close, _nl) {
       // "[[" anchorId anchor_reftext?  "]]" newline
-      const reftext = reftextNode.toAST();
+      const reftext =
+        getCheckedAST<PlainText>(reftextNode, "PlainText").content;
       return {
         ...(reftext.length ? { reftext } : undefined),
         id: id.sourceString,
@@ -450,31 +510,32 @@ export const toAST = (input: string): Document => {
       } satisfies BlockAnchor;
     },
     BlockContentGeneric(_nl, content1, contentN) {
-      return [content1.toAST(), ...(contentN.toAST() || [])];
+      // BlockContentGeneric<delim> = newline? InlineElementOrText<delim>+ BlockContentGeneric<delim>?
+      const hd = content1.toAST();
+      const tail = contentN.toAST() ?? [];
+      return [...hd, ...tail.flat()];
     },
-    BlockHorizontalRule(rule, _newline) {
+    BlockHorizontalRule(_rule, _newline) {
       return {
-        content: rule.toAST(),
+        content: undefined,
         context: "thematic_break",
         type: "HorizontalRule",
       } satisfies BlockHorizontalRule;
     },
     BlockImage(_img, url, _open, alt, _comma, dims, _close) {
-      const ast = this.inlineImage(_img, url, _open, alt, _comma, dims, _close)
-        .toAST();
       return {
-        ...ast,
+        ...this.InlineImage(
+          _img,
+          url,
+          _open,
+          alt,
+          _comma,
+          dims,
+          _close,
+        ) as InlineImage,
         type: "BlockImage",
       } satisfies BlockImage;
     },
-    // BlockListingDelimited(_d1, _nl1, content, _d2, _newline2) {
-    //   return {
-    //     content: content.sourceString.trim(),
-    //     context: "listing",
-    //     delimited: true,
-    //     type: "BlockListing",
-    //   } satisfies BlockListing;
-    // },
     BlockMacro(name, _, target, attrs, _newline, content, _close, _newline2) {
       return {
         ...truthyValuesOrEmptyPojo({ target: target.sourceString }),
@@ -486,7 +547,7 @@ export const toAST = (input: string): Document => {
       } satisfies BlockMacro;
     },
     BlockMetaData(titleNode, attributes, _newline) {
-      const title = titleNode.toAST();
+      const title = getCheckedAST<PlainText>(titleNode, "PlainText").content;
       return {
         ...(title.length ? { title } : undefined),
         attributes: attributes.toAST(),
@@ -507,33 +568,30 @@ export const toAST = (input: string): Document => {
         type: "Paragraph",
       } satisfies BlockParagraph;
     },
-    // BlockPassthrough(_open, _newline, content, _close, _newline2) {
-    //   return {
-    //     content: content.sourceString,
-    //     context: "passthrough",
-    //     type: "BlockPassthrough",
-    //   } satisfies BlockPassthrough;
-    // },
-    // BlockQuote(_open, _newline, content, _close, _newline2) {
-    //   return {
-    //     content: content.toAST(),
-    //     context: "quote",
-    //     type: "BlockQuote",
-    //   } satisfies BlockQuote;
-    // },
     BlockQuotedParagraph(
       _open,
       content,
-      _closed,
+      _close,
       _newline,
-      _attribution,
+      _attributiondashdash,
       citation,
       _newline2,
     ) {
-      // BlockQuotedParagraph = '"' (~'"' any)* '"' newline "--" plaintext? newline
+      // BlockQuotedParagraph =
+      // doublequote
+      // (~doublequote InlineElementOrText newline?)*
+      // doublequote
+      //  newline
+      //  "--"
+      //  (any_non_newline+)?
+      // newline
       return {
         citation: citation.sourceString,
-        content: content.toAST(),
+        content: getCheckedAST<InlineElementOrPlainText[]>(
+          content,
+          "any",
+          true,
+        ),
         context: "quote",
         type: "BlockQuotedParagraph",
       } satisfies BlockQuotedParagraph;
@@ -546,19 +604,13 @@ export const toAST = (input: string): Document => {
         type: "HeaderSetext",
       } satisfies BlockSectionSetext;
     },
-    // BlockSidebar(_open, _newline, content, _close, _newline2) {
-    //   return {
-    //     content: content.toAST(),
-    //     context: "sidebar",
-    //     type: "Sidebar",
-    //   } satisfies BlockSidebar;
-    // },
     BlockStructure(anchor, metadata, blockKind, _nl1, _nl2) {
       // BlockStructure<t> = BlockAnchor? BlockMetaData? t newline? newline?
       const [metadataAst] = metadata.toAST() ?? [];
       const [anchorAst] = anchor.toAST() ?? [];
+      const blockKindAST = blockKind.toAST();
       const nextBlock: BlockStructure = {
-        ...blockKind.toAST(),
+        ...blockKindAST,
         ...truthyValuesOrEmptyPojo({ metadata: metadataAst }),
         ...truthyValuesOrEmptyPojo({ anchor: anchorAst }),
       } satisfies BlockStructure;
@@ -664,6 +716,11 @@ export const toAST = (input: string): Document => {
     InlineElement(element) {
       return element.toAST();
     },
+    InlineElementOrText(content) {
+      const ast = content.toAST();
+      return ast;
+      // return getCheckedAST<InlineElementOrPlainText>(content, "any");
+    },
     // ImageUrl = (~"[" any)+
     // ImageH = "," Digits
     // ImageW = Digits
@@ -731,12 +788,6 @@ export const toAST = (input: string): Document => {
         type: "ParagraphSegment",
       } satisfies ParagraphSegment;
     },
-    // plaintext(content) {
-    //   return {
-    //     content: content.sourceString,
-    //     type: "PlainText",
-    //   } satisfies PlainText;
-    // },
     SingleLineText(content, _newline) {
       return {
         content: content.toAST(),
@@ -846,13 +897,12 @@ const truthyValuesOrEmptyPojo = <T extends Record<string, any>>(
   }
   return it;
 };
-const rewireBlock = <B extends Partial<Block>>(block: B): B => {
-  const attrContext = block.metadata?.attributes?.[0]?.name;
-  const nextBlock = rewireForDefaultContext(block);
-  const finalBlock = attrContext
-    ? rewireBlockForMasquerading(nextBlock, attrContext)
-    : block;
-  return finalBlock;
+const toDerivedBlockType = <B extends Partial<Block>>(block: B): B => {
+  const defaultStyle = block.metadata?.attributes?.[0]?.name;
+  return pipe(
+    deriveBlockDefaultContext,
+    (it) => deriveBlockMasquerading(it, defaultStyle),
+  )(block);
 };
 const contextByMarker: Record<string, BlockContext> = {
   "_": "quote",
@@ -872,7 +922,7 @@ const blockTypeByMarker: Record<string, Block["type"]> = {
   "+": "BlockPassthrough",
   "=": "BlockExample",
 } as const;
-const rewireForDefaultContext = <B extends Partial<Block>>(block: B): B => {
+const deriveBlockDefaultContext = <B extends Partial<Block>>(block: B): B => {
   const delimiterChar = block.delimiter?.slice(
     0,
     1,
@@ -953,17 +1003,20 @@ const blocksAttrsByContext = {
 /**
  * @see https://docs.asciidoctor.org/asciidoc/latest/blocks/masquerading/#built-in-permutations
  */
-const rewireBlockForMasquerading = <B extends Partial<BlockStructure>>(
+const deriveBlockMasquerading = <B extends Partial<BlockStructure>>(
   block: B,
-  toContext: string,
+  defaultStyle?: string,
 ): B => {
+  if (!defaultStyle) {
+    return block;
+  }
   const allowed =
     masqueradingFromTo[block.context as keyof typeof masqueradingFromTo];
   if (!allowed) {
     return block;
   }
-  const nextAttrs = blocksAttrsByContext[toContext as BlockContext];
-  if (allowed.includes(toContext) && nextAttrs) {
+  const nextAttrs = blocksAttrsByContext[defaultStyle as BlockContext];
+  if (allowed.includes(defaultStyle) && nextAttrs) {
     return {
       ...block,
       ...nextAttrs,
