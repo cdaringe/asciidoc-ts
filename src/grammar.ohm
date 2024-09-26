@@ -5,13 +5,12 @@ AsciiDoc {
     | Block -- block
 
   wrapping_attr_text = (~newline ~space_backslash any)+ space_backslash
-  DocumentAttributeValueWrappedText = wrapping_attr_text newline DocumentAttributeValue
-  DocumentAttributeValueSingleText = (~newline any)* newline
-  DocumentAttributeValue =
-    | DocumentAttributeValueWrappedText -- val_wrapped
-    | DocumentAttributeValueSingleText -- val
+  doc_attr_value_multi_line = wrapping_attr_text newline doc_attr_value
+  doc_attr_value =
+    | doc_attr_value_multi_line -- val_wrapped
+    | any_non_newline_text<end> -- val
   document_attribute_key = (~":" ~space any)+
-  DocumentAttribute = ":" document_attribute_key ":" DocumentAttributeValue
+  DocumentAttribute = ":" document_attribute_key ":" doc_attr_value? newline?
 
   AttributeList = "[" listOf<Attribute, ","> "]"
   Attribute = AttributeNamed | AttributePositional
@@ -42,7 +41,10 @@ AsciiDoc {
     | BlockParagraph
     | newline
 
-  BlockContentGeneric<delim> = newline? InlineElementOrText<delim>+ BlockContentGeneric<delim>?
+  block_exit<delim> = newline delim
+  BlockContentGenericLineFull<delim> = newline? (~delim InlineElementOrText<delim>)+
+  BlockContentGenericLineEmpty<delim> = (~block_exit<delim> newline)
+  BlockContentGeneric<delim> = (BlockContentGenericLineFull<delim> | BlockContentGenericLineEmpty<delim>) BlockContentGeneric<delim>?
 
   Fencable<delim> =
   | BlockAdmonition
@@ -57,7 +59,7 @@ AsciiDoc {
 
   BlockQuotedParagraph = doublequote BlockContentGeneric<doublequote> doublequote newline "--" (any_non_newline+)? newline
 
-  LineElementStart = "="
+  line_element_start_probably_wrong = "="
 
   inlineelstart =
       | "*"  // constrained bold
@@ -78,13 +80,12 @@ AsciiDoc {
   EndOfFile = newline? end  // Allow optional newline at end of file
   SingleLineText = InlineElement+ newline?
 
-  BlockSectionSetext = HeaderTextSetext HeaderUnderlineSetext BlankLine*
-  HeaderTextSetext = line
-  HeaderUnderlineSetext = (("=" | "-")+ newline) | (("=" | "-")+ end)
+  BlockSectionSetext = line header_underline_setext BlankLine*
+  header_underline_setext = (("=" | "-")+ newline) | (("=" | "-")+ end)
 
 
-  Header = HeaderMarker HeaderContent newline?
-  HeaderMarker =
+  Header = header_marker HeaderContent newline?
+  header_marker =
   | "======"
   | "====="
   | "===="
@@ -93,7 +94,7 @@ AsciiDoc {
   | "="
   HeaderContent = InlineElementOrText<newline>+
 
-  BlockParagraph = (~LineElementStart) ParagraphSegment
+  BlockParagraph = (~line_element_start_probably_wrong) ParagraphSegment
   ParagraphSegment = InlineElementOrText<end>+ (BlankLine ParagraphSegment)?
 
   BlockList = UnorderedList
@@ -106,21 +107,21 @@ AsciiDoc {
   unordered_list_marker = ("*" | "-" | "•")+ space+
 
   OrderedList = OrderedListItem+
-  OrderedListItem = OLMarker ListItemContent newline?
+  OrderedListItem = ol_marker ListItemContent newline?
   ol_marker_dot = ". "
-  OLMarkerDigits = Digits ol_marker_dot
-  OLMarker = OLMarkerDigits | ol_marker_dot
+  ol_marker_digits_dot = digits ol_marker_dot
+  ol_marker = ol_marker_digits_dot | ol_marker_dot
 
   DescriptionList = DescriptionListItem+
-  DescriptionListItem = Term "::" DescriptionContent
+  DescriptionListItem = description_list_term "::" description_content
 
   ListContinuation = "+" newline ListItemContent
 
-  Term = (~"::" any)+
+  description_list_term = (~"::" any)+
 
   line = (~newline any)+ newline
 
-  DescriptionContent = line+
+  description_content = line+
 
   BlockTable = TableRow+
   TableRow = "|" TableCell ("|" TableCell)* newline
@@ -128,22 +129,19 @@ AsciiDoc {
 
   BlockHorizontalRule = "'''" newline
 
-  BlockAdmonition = AdmonitionType any_non_newline+
-  AdmonitionType = "NOTE:" | "TIP:" | "IMPORTANT:" | "WARNING:" | "CAUTION:"
+  BlockAdmonition = admonitiontype any_non_newline_text<end>
+  admonitiontype = "NOTE:" | "TIP:" | "IMPORTANT:" | "WARNING:" | "CAUTION:"
 
-
-  PassthroughDelimiter = "++++"
-
-  BlockMacro = MacroName "::" MacroTarget? AttributeList? newline
+  BlockMacro = macro_name "::" macro_target? AttributeList? newline
                (line | BlankLine)*
-               MacroDelimiter newline
-  MacroName = letter+
-  MacroTarget = (~"[" any)+
+               macro_delimiter newline
+  macro_name = letter+
+  macro_target = (~"[" any)+
 
-  MacroDelimiter = "----"
+  macro_delimiter = "----"
 
-  AttributeEntry = ":" AttributeName ":" AttributeValue? newline
-  AttributeName = (~":" any)+
+  AttributeEntry = ":" attribute_name ":" AttributeValue? newline
+  attribute_name = (~":" any)+
   AttributeValue = (~InlineElement any)*
 
   comment_delimiter = "////"
@@ -169,7 +167,6 @@ AsciiDoc {
   any_non_newline_text<delim> = (~delim any_non_newline)+
 
   any_non_newline = (~newline (space | any))
-  // plaintext = (~inlineelstart ~newline ~httpscheme any)+
 
   ConstrainedBold = "*" InlineElementOrText<"*">+ "*"
   UnconstrainedBold = "*" ConstrainedBold "*"
@@ -179,24 +176,23 @@ AsciiDoc {
 
   MonospaceText = "`" (~"`" any)+ "`"
   httpscheme = "https" | "http"
-  UrlMacroScheme = httpscheme | "ftp" | "irc" | "mailto"
-  UrlMacro = UrlMacroScheme ":" (~"[" any)+ AttributeList
+  url_scheme = httpscheme | "ftp" | "irc" | "mailto"
+  UrlMacro = url_scheme ":" (~"[" any)+ AttributeList
 
-  Link = "link:" Url "[" LinkText "]"
-  Url = (~"[" any)+
-  LinkText = (~"]" any)*
+  Link = "link:" url "[" link_text "]"
+  url = (~"[" any)+
+  link_text = (~"]" any)*
 
-  ImageUrl = (~"[" any)+
-  ImageH = Digits
-  ImageW = Digits
-  ImageDims = ImageW ","? ImageH?
-  InlineImage = "image:" ImageUrl "[" ImageAlt ("," ImageDims)? "]"
-  BlockImage = "image::" ImageUrl "[" ImageAlt ("," ImageDims)? "]"
-  ImageAlt = (~"]" ~"," any)*
+  image_url = (~"[" any)+
+  image_h = digits
+  image_w = digits
+  ImageDims = image_w ","? image_h?
+  InlineImage = "image:" image_url "[" image_alt ("," ImageDims)? "]"
+  BlockImage = "image::" image_url "[" image_alt ("," ImageDims)? "]"
+  image_alt = (~"]" ~"," any)*
 
-  Footnote = "footnote:" FootnoteId? "[" FootnoteText "]"
-  FootnoteId = Digits
-  FootnoteText = (~"]" any)*
+  Footnote = "footnote:" digits? "[" footnote_text "]"
+  footnote_text = (~"]" any)*
 
   CrossReference = "<<" CrossReferenceId CrossReferenceText? ">>"
   CrossReferenceId = (~"," ~">>" any)+
@@ -207,11 +203,11 @@ AsciiDoc {
   SubscriptText = "~" (~"~" any)+ "~"
   SuperscriptText = "^" (~"^" any)+ "^"
 
-  AttributeReference = "{" AttributeName "}"
+  AttributeReference = "{" attribute_name "}"
 
   BlankLine = space* newline
 
-  Digits = digit+
+  digits = digit+
 
   backslash = "\\"
   space_backslash = " " backslash

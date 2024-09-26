@@ -15,6 +15,7 @@ WARNING: The grammar does not follow asciidoc perfectly, but gets you 99% there.
 * Improve AST types for well-known attributes. Many position attributes correlate to concrete behavior, but aren't modeled. For example `[quote, Albert Einstein]` are just two generic `Attribute`s, but the second could be a `AttributeAuthor` or similar.
 * Detect float context when when BlockHeader* is parsed
 
+
 == Known Issues
 
 * Compound blocks
@@ -23,3 +24,5 @@ WARNING: The grammar does not follow asciidoc perfectly, but gets you 99% there.
 * block masquerading https://docs.asciidoctor.org/asciidoc/latest/blocks/masquerading/
 * Non-default fence lengths (e.g. 5 char `=====` fences for an BlockExample)
 * Document attributes are less permissive w.r.t. spaces within the `:` `:attr-fences`. No whitespace is allowed.
+* This lib doesn't produce a CST--it produces an AST. It probably _should_ produce a CST, which would be more useful for stable round-tripping.
+** We currently use extensive use of Syntactic vs Lexical rules. To make a CST viable, we need to switch to a more lexical approach, and use more refined AST nodes to capture the lexed structure.

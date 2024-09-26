@@ -1,39 +1,27 @@
 import { test } from "vitest";
-import { toAST } from "./mod.js";
+import { toAST } from "../mod.js";
+
 test("Cross-references - internal", async ({ expect }) => {
   const input = `
-= Document Title
-
 [[section-1]]
 == Section 1
 
-This is a reference to <<section-2>>.
+reference_to_section_2 <<section-2>>
 
 [[section-2]]
 == Section 2
 
-This section refers back to <<section-1,the first section>>.
+<<section-1,ref_to_section_1>>.
 
-Here's a reference to <<_subsection_2_1>>.
+reference_to_section_2 <<_subsection_2_1>>
 
 === Subsection 2.1
 
-This is a subsection.
 `.trim();
   const result = toAST(input);
-  expect(result).toMatchInlineSnapshot(`
+  expect(result.value).toMatchInlineSnapshot(`
     {
       "blocks": [
-        {
-          "content": [
-            {
-              "content": "Document Title",
-              "type": "PlainText",
-            },
-          ],
-          "level": 1,
-          "type": "Header",
-        },
         {
           "anchor": {
             "id": "section-1",
@@ -45,26 +33,19 @@ This is a subsection.
               "type": "PlainText",
             },
           ],
+          "context": "section",
           "level": 2,
           "type": "Header",
         },
         {
           "content": [
             {
-              "content": "This is a reference to ",
-              "type": "PlainText",
-            },
-            {
-              "id": "section-2",
-              "text": null,
-              "type": "CrossReference",
-            },
-            {
-              "content": ".",
+              "content": "reference_to_section_2 <<section-2>>",
               "type": "PlainText",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
         {
           "anchor": {
@@ -77,18 +58,15 @@ This is a subsection.
               "type": "PlainText",
             },
           ],
+          "context": "section",
           "level": 2,
           "type": "Header",
         },
         {
           "content": [
             {
-              "content": "This section refers back to ",
-              "type": "PlainText",
-            },
-            {
               "id": "section-1",
-              "text": ",the first section",
+              "text": ",ref_to_section_1",
               "type": "CrossReference",
             },
             {
@@ -96,25 +74,18 @@ This is a subsection.
               "type": "PlainText",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
         {
           "content": [
             {
-              "content": "Here's a reference to ",
-              "type": "PlainText",
-            },
-            {
-              "id": "_subsection_2_1",
-              "text": null,
-              "type": "CrossReference",
-            },
-            {
-              "content": ".",
+              "content": "reference_to_section_2 <<_subsection_2_1>>",
               "type": "PlainText",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
         {
           "content": [
@@ -123,17 +94,9 @@ This is a subsection.
               "type": "PlainText",
             },
           ],
+          "context": "section",
           "level": 3,
           "type": "Header",
-        },
-        {
-          "content": [
-            {
-              "content": "This is a subsection.",
-              "type": "PlainText",
-            },
-          ],
-          "type": "Paragraph",
         },
       ],
       "type": "Document",

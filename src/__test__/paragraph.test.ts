@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import { toAST } from "./mod.js";
+import { toAST } from "../mod.js";
 test("BlockParagraph - simple", async ({ expect }) => {
   const input = `A simple paragraph.`;
   const result = toAST(input);

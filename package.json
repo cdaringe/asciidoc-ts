@@ -6,7 +6,7 @@
   "type": "module",
   "foo": "bar",
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
     "format": "wireit"
   },
   "repository": {
