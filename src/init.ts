@@ -1,7 +1,7 @@
 import { grammar } from "./grammar.js";
 import { semantics } from "./ast.js";
 export const verifyRules = () => {
-  const ruleAliasRegex = /--\s+[a-zA-Z0-9]+$/;
+  const ruleAliasRegex = /--\s+[_a-zA-Z0-9]+$/;
   const grammarRules = new Set(
     Object.entries(grammar.rules).filter(([_, it]) =>
       !it.source.contents.match(ruleAliasRegex)

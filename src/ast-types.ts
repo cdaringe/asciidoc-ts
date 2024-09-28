@@ -175,17 +175,6 @@ export interface ListItem {
   depth: number;
   type: "ListItem";
 }
-export interface BlockOrderedList
-  extends Omit<BlockBase<"olist", "simple">, "content"> {
-  attributes?: AttributeEntry[];
-  content: OrderedListItem[];
-  type: "OrderedList";
-}
-export interface OrderedListItem {
-  content: InlineElement[];
-  depth: number;
-  type: "OrderedListItem";
-}
 export interface BlockDescriptionList
   extends Omit<BlockBase<"dlist", "simple">, "content"> {
   content: DescriptionListItem[];
@@ -336,7 +325,7 @@ export interface Footnote {
 }
 export interface CrossReference {
   id: string;
-  text: string | null;
+  text?: string;
   type: "CrossReference";
 }
 export interface InlinePassthrough {

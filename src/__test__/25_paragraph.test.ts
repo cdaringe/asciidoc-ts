@@ -3,7 +3,7 @@ import { toAST } from "../mod.js";
 test("BlockParagraph - simple", async ({ expect }) => {
   const input = `A simple paragraph.`;
   const result = toAST(input);
-  expect(result).toMatchInlineSnapshot(`
+  expect(result.value).toMatchInlineSnapshot(`
     {
       "blocks": [
         {
@@ -13,7 +13,8 @@ test("BlockParagraph - simple", async ({ expect }) => {
               "type": "PlainText",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
       ],
       "type": "Document",
@@ -23,13 +24,13 @@ test("BlockParagraph - simple", async ({ expect }) => {
 test("BlockParagraph - with InlineElements", async ({ expect }) => {
   const input = `This is *foo* bar`;
   const result = toAST(input);
-  expect(result).toMatchInlineSnapshot(`
+  expect(result.value).toMatchInlineSnapshot(`
     {
       "blocks": [
         {
           "content": [
             {
-              "content": "This is ",
+              "content": "This is",
               "type": "PlainText",
             },
             {
@@ -46,7 +47,8 @@ test("BlockParagraph - with InlineElements", async ({ expect }) => {
               "type": "PlainText",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
       ],
       "type": "Document",
@@ -56,7 +58,7 @@ test("BlockParagraph - with InlineElements", async ({ expect }) => {
 test("BlockParagraph - with newlines", async ({ expect }) => {
   const input = `Still\none\nparagraph.`;
   const result = toAST(input);
-  expect(result).toMatchInlineSnapshot(`
+  expect(result.value).toMatchInlineSnapshot(`
     {
       "blocks": [
         {
@@ -74,7 +76,8 @@ test("BlockParagraph - with newlines", async ({ expect }) => {
               "type": "PlainText",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
       ],
       "type": "Document",
@@ -84,7 +87,7 @@ test("BlockParagraph - with newlines", async ({ expect }) => {
 test("BlockParagraph - 2 newlines as 2 Paragraphs", async ({ expect }) => {
   const input = `Two\n\nparagraphs.`;
   const result = toAST(input);
-  expect(result).toMatchInlineSnapshot(`
+  expect(result.value).toMatchInlineSnapshot(`
     {
       "blocks": [
         {
@@ -94,7 +97,8 @@ test("BlockParagraph - 2 newlines as 2 Paragraphs", async ({ expect }) => {
               "type": "PlainText",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
         {
           "content": [
@@ -103,7 +107,8 @@ test("BlockParagraph - 2 newlines as 2 Paragraphs", async ({ expect }) => {
               "type": "PlainText",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
       ],
       "type": "Document",

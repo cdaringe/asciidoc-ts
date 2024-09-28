@@ -99,15 +99,15 @@ semantics.addOperation<any>("toAST", {
   },
   BlockContentGeneric(firstNode, recursiveNode) {
     const hd = firstNode.toAST();
-    const tail = recursiveNode.toAST() || []
-    return [...(Array.isArray(hd) ? hd :[hd]), ...tail.flat()];
+    const tail = recursiveNode.toAST() || [];
+    return [...(Array.isArray(hd) ? hd : [hd]), ...tail.flat()];
   },
+  BlockContentGenericLineEmpty: defaultToAST,
   BlockContentGenericLineFull(_nl, contentN) {
     // BlockContentGenericFull<delim> = blank_lines? (~delim InlineElementOrText<delim>)+ BlockContentGeneric<delim>?
     const tail = contentN.toAST() ?? [];
-    return tail.flat()
+    return tail.flat();
   },
-  BlockContentGenericLineEmpty: defaultToAST,
   BlockHorizontalRule(_rule, _newline) {
     return {
       content: undefined,
@@ -224,13 +224,15 @@ semantics.addOperation<any>("toAST", {
   },
   CrossReference(_, id, text, __) {
     return {
+      ...truthyValuesOrEmptyPojo({ text: text.toAST() }),
       id: id.sourceString,
-      text: text.sourceString || null,
       type: "CrossReference",
     } satisfies t.CrossReference;
   },
   CrossReferenceId: defaultToAST, // (~"," ~">>" any)+
-  CrossReferenceText: (_comma, text) => text.toAST(),
+  CrossReferenceText: (_comma, text) => {
+    return text.toAST();
+  },
   DescriptionList(items) {
     return {
       content: items.toAST(),
@@ -301,12 +303,6 @@ semantics.addOperation<any>("toAST", {
       type: "Header",
     } satisfies t.BlockSection;
   },
-  newline(nl) {
-    return {
-      content: nl.sourceString,
-     type: "PlainText",
-    } satisfies t.PlainText;
-  },
   HeaderContent: defaultToAST,
   ImageDims(width, _comma, height) {
     const widthNum = width.sourceString
@@ -358,11 +354,17 @@ semantics.addOperation<any>("toAST", {
   ListItemContent(content, continuation, _dunno) {
     return [...content.toAST(), ...(continuation.toAST() || [])];
   },
-  MonospaceText(_, content, __) {
+  monospace_text(_, content, __) {
     return {
       content: content.toAST(),
       type: "MonospaceText",
     } satisfies t.MonospaceText;
+  },
+  newline(nl) {
+    return {
+      content: nl.sourceString,
+      type: "PlainText",
+    } satisfies t.PlainText;
   },
   nonemptyListOf(x, _sep, xs) {
     return [x.toAST()].concat(xs.toAST());
@@ -370,10 +372,11 @@ semantics.addOperation<any>("toAST", {
   NonFencable: defaultToAST,
   OrderedList(items) {
     return {
-      content: normalizeDepth(items.toAST() as t.OrderedListItem[]),
+      content: normalizeDepth(items.toAST() as t.ListItem[]),
       context: "olist",
-      type: "OrderedList",
-    } satisfies t.BlockOrderedList;
+      ordered: true,
+      type: "BlockList",
+    } satisfies t.BlockList;
   },
   OrderedListItem(marker, content, _nl) {
     /**
@@ -442,7 +445,7 @@ semantics.addOperation<any>("toAST", {
     return {
       content: normalizeDepth(items.toAST() as t.ListItem[]),
       context: "ulist",
-      ordered: true,
+      ordered: false,
       type: "BlockList",
     } satisfies t.BlockList;
   },

@@ -6,10 +6,8 @@ describe("block", () => {
 [#id, .role]
 This is a paragraph with metadata.`.trimStart();
     const result = toAST(input);
-    expect(result).toMatchInlineSnapshot(`
-    {
-      "ok": true,
-      "value": {
+    expect(result.value).toMatchInlineSnapshot(`
+      {
         "blocks": [
           {
             "content": [
@@ -39,18 +37,15 @@ This is a paragraph with metadata.`.trimStart();
           },
         ],
         "type": "Document",
-      },
-    }
-  `);
+      }
+    `);
   });
   test("Parse paragraph block", async ({ expect }) => {
     const input = `This is a simple paragraph block.
 It can span multiple lines.`;
     const result = toAST(input);
-    expect(result).toMatchInlineSnapshot(`
-    {
-      "ok": true,
-      "value": {
+    expect(result.value).toMatchInlineSnapshot(`
+      {
         "blocks": [
           {
             "content": [
@@ -68,17 +63,14 @@ It can span multiple lines.`;
           },
         ],
         "type": "Document",
-      },
-    }
-  `);
+      }
+    `);
   });
   test("Parse header block", async ({ expect }) => {
     const input = `== Section Header`;
     const result = toAST(input);
-    expect(result).toMatchInlineSnapshot(`
-    {
-      "ok": true,
-      "value": {
+    expect(result.value).toMatchInlineSnapshot(`
+      {
         "blocks": [
           {
             "content": [
@@ -93,9 +85,8 @@ It can span multiple lines.`;
           },
         ],
         "type": "Document",
-      },
-    }
-  `);
+      }
+    `);
   });
   test("ListingBlock promoted to SourceBlock", async ({ expect }) => {
     const input = `[source,javascript]
@@ -105,41 +96,42 @@ function hello() {${" "}
 }
 ----`;
     const result = toAST(input, "Block");
-    expect(result).toMatchInlineSnapshot(`
+    expect(result.value).toMatchInlineSnapshot(`
       {
-        "ok": true,
-        "value": {
-          "content": [
+        "content": [
+          {
+            "content": "function hello()",
+            "type": "PlainText",
+          },
+          {
+            "content": "{ ",
+            "type": "PlainText",
+          },
+          {
+            "content": "console.log("Hello, world!");",
+            "type": "PlainText",
+          },
+          {
+            "content": "}",
+            "type": "PlainText",
+          },
+        ],
+        "context": "source",
+        "delimiter": "----",
+        "metadata": {
+          "attributes": [
             {
-              "content": "function hello() { ",
-              "type": "PlainText",
+              "name": "source",
+              "type": "AttributeEntry",
             },
             {
-              "content": "console.log("Hello, world!");",
-              "type": "PlainText",
-            },
-            {
-              "content": "}",
-              "type": "PlainText",
+              "name": "javascript",
+              "type": "AttributeEntry",
             },
           ],
-          "context": "source",
-          "delimiter": "----",
-          "metadata": {
-            "attributes": [
-              {
-                "name": "source",
-                "type": "AttributeEntry",
-              },
-              {
-                "name": "javascript",
-                "type": "AttributeEntry",
-              },
-            ],
-            "title": [],
-          },
-          "type": "BlockSource",
+          "title": [],
         },
+        "type": "BlockSource",
       }
     `);
   });

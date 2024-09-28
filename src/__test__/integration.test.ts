@@ -8,7 +8,7 @@ test("Complex Document", async ({ expect }) => {
 
 This is a paragraph with *bold* and _italic_ text.
 
-* List item 1
+* List item with URL https://foo.bar[baz]
 * List item 2
 ** Nested item
 
@@ -22,14 +22,11 @@ console.log(\`Hello, ${"\${name}"}!\`);
 https://example.com[Visit Example]
 
 NOTE: This is an admonition.
-`;
+`.trimStart();
   const result = toAST(input);
-  expect(result).toMatchInlineSnapshot(`
+  expect(result.value).toMatchInlineSnapshot(`
     {
       "blocks": [
-        {
-          "type": "BlankLine",
-        },
         {
           "content": [
             {
@@ -37,6 +34,7 @@ NOTE: This is an admonition.
               "type": "PlainText",
             },
           ],
+          "context": "section",
           "level": 1,
           "type": "Header",
         },
@@ -47,13 +45,14 @@ NOTE: This is an admonition.
               "type": "PlainText",
             },
           ],
+          "context": "section",
           "level": 2,
           "type": "Header",
         },
         {
           "content": [
             {
-              "content": "This is a paragraph with ",
+              "content": "This is a paragraph with",
               "type": "PlainText",
             },
             {
@@ -66,7 +65,7 @@ NOTE: This is an admonition.
               "type": "ConstrainedBold",
             },
             {
-              "content": "and ",
+              "content": "and",
               "type": "PlainText",
             },
             {
@@ -83,19 +82,20 @@ NOTE: This is an admonition.
               "type": "PlainText",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
         {
-          "items": [
+          "content": [
             {
               "content": [
                 {
-                  "content": "List item 1",
+                  "content": "List item with URL https://foo.bar[baz]",
                   "type": "PlainText",
                 },
               ],
               "depth": 0,
-              "type": "UnorderedListItem",
+              "type": "ListItem",
             },
             {
               "content": [
@@ -105,7 +105,7 @@ NOTE: This is an admonition.
                 },
               ],
               "depth": 0,
-              "type": "UnorderedListItem",
+              "type": "ListItem",
             },
             {
               "content": [
@@ -115,16 +115,34 @@ NOTE: This is an admonition.
                 },
               ],
               "depth": 1,
-              "type": "UnorderedListItem",
+              "type": "ListItem",
             },
           ],
-          "type": "UnorderedList",
+          "context": "ulist",
+          "ordered": false,
+          "type": "BlockList",
         },
         {
-          "content": "function greet(name) {
-    console.log(\`Hello, \${name}!\`);
-    }",
-          "delimited": true,
+          "content": [
+            {
+              "content": "function greet(name)",
+              "type": "PlainText",
+            },
+            {
+              "content": "{",
+              "type": "PlainText",
+            },
+            {
+              "content": "console.log(\`Hello, \${name}!\`);",
+              "type": "PlainText",
+            },
+            {
+              "content": "}",
+              "type": "PlainText",
+            },
+          ],
+          "context": "source",
+          "delimiter": "----",
           "metadata": {
             "attributes": [
               {
@@ -136,6 +154,7 @@ NOTE: This is an admonition.
                 "type": "AttributeEntry",
               },
             ],
+            "title": [],
           },
           "type": "BlockSource",
         },
@@ -153,15 +172,21 @@ NOTE: This is an admonition.
               "url": "https://example.com",
             },
           ],
-          "type": "Paragraph",
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
         {
           "admonitionType": "NOTE",
-          "content": "This is an admonition.",
-          "type": "Admonition",
+          "content": {
+            "content": "This is an admonition.",
+            "type": "PlainText",
+          },
+          "context": "admonition",
+          "type": "BlockAdmonition",
         },
       ],
       "type": "Document",
     }
   `);
+  throw new Error("list item with url in it is biffed");
 });

@@ -1,17 +1,21 @@
 import { test } from "vitest";
 import { toAST } from "../mod.js";
+
 test("BlockExample", async ({ expect }) => {
   const input = `====
 best example.
 ====
 `;
   const result = toAST(input);
-  expect(result).toMatchInlineSnapshot(`
+  expect(result.value).toMatchInlineSnapshot(`
     {
       "blocks": [
         {
           "content": [
-            "best example.",
+            {
+              "content": "best example.",
+              "type": "PlainText",
+            },
           ],
           "context": "example",
           "delimiter": "====",

@@ -10,48 +10,63 @@ _I can!_
 ////
 `;
   const result = toAST(input);
-  expect(result).toMatchInlineSnapshot(`
+  expect(result.value).toMatchInlineSnapshot(`
     {
-      "ok": true,
-      "value": {
-        "blocks": [
-          {
-            "content": [
-              {
-                "content": "totally cool comment.",
-                "type": "PlainText",
-              },
-              {
-                "content": "
+      "blocks": [
+        {
+          "content": [
+            {
+              "content": "totally cool comment.",
+              "type": "PlainText",
+            },
+            {
+              "content": "
     ",
-                "type": "PlainText",
-              },
-              {
-                "content": "can you EVEN **believe** it?",
-                "type": "PlainText",
-              },
-              {
-                "content": "
+              "type": "PlainText",
+            },
+            {
+              "content": "can you EVEN",
+              "type": "PlainText",
+            },
+            {
+              "content": [
+                {
+                  "content": [
+                    {
+                      "content": "believe",
+                      "type": "PlainText",
+                    },
+                  ],
+                  "type": "ConstrainedBold",
+                },
+              ],
+              "type": "ConstrainedBold",
+            },
+            {
+              "content": "it?",
+              "type": "PlainText",
+            },
+            {
+              "content": "
     ",
-                "type": "PlainText",
-              },
-              {
-                "content": [
-                  {
-                    "content": "I can!",
-                    "type": "PlainText",
-                  },
-                ],
-                "type": "UnconstrainedItalic",
-              },
-            ],
-            "context": "comment",
-            "delimiter": "////",
-            "type": "BlockComment",
-          },
-        ],
-        "type": "Document",
-      },
+              "type": "PlainText",
+            },
+            {
+              "content": [
+                {
+                  "content": "I can!",
+                  "type": "PlainText",
+                },
+              ],
+              "type": "UnconstrainedItalic",
+            },
+          ],
+          "context": "comment",
+          "delimiter": "////",
+          "type": "BlockComment",
+        },
+      ],
+      "type": "Document",
     }
   `);
 });

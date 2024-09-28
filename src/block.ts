@@ -1,6 +1,5 @@
 import { pipe } from "./fp.js";
 import * as t from "./ast-types.js";
-
 export const maybeBlockPromoteToCode = <B extends Partial<t.Block>>(
   block: B,
 ): B => {
@@ -8,7 +7,9 @@ export const maybeBlockPromoteToCode = <B extends Partial<t.Block>>(
   if (!metadata) {
     return block;
   }
-  if (block.type === "BlockListing" && metadata.attributes?.[0]?.name === "source") {
+  if (
+    block.type === "BlockListing" && metadata.attributes?.[0]?.name === "source"
+  ) {
     return {
       ...block,
       context: "source",
@@ -22,7 +23,7 @@ export const toDerivedBlockType = <B extends Partial<t.Block>>(block: B): B => {
   return pipe(
     deriveBlockDefaultContext,
     (it) => deriveBlockMasquerading(it, defaultStyle),
-    it => maybeBlockPromoteToCode(it),
+    (it) => maybeBlockPromoteToCode(it),
   )(block);
 };
 const contextByMarker: Record<string, t.BlockContext> = {

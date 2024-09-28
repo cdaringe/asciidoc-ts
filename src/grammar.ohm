@@ -62,6 +62,7 @@ AsciiDoc {
   line_element_start_probably_wrong = "="
 
   inlineelstart =
+      | "<" // Inline tag or cross-ref start
       | "*"  // constrained bold
       | "**"  // unconstrained Bold
       | "_"  // constrained Italics
@@ -147,6 +148,7 @@ AsciiDoc {
   comment_delimiter = "////"
 
   InlineElement =
+    | UrlMacro
     | AttributeReference
     | ConstrainedBold
     | ConstrainedItalic
@@ -155,14 +157,18 @@ AsciiDoc {
     | InlineImage
     | InlinePassthrough
     | Link
-    | MonospaceText
+    | monospace_text
     | SubscriptText
     | SuperscriptText
     | UnconstrainedBold
     | UnconstrainedItalic
-    | UrlMacro
 
-  InlineElementOrText<delim> = InlineElement | any_non_newline_text<delim>
+  InlineElementOrText<delim> =
+    | InlineElement  -- inline_el
+    | any_non_inlinelike_text<delim> -- text_up_to_inline_el
+    | any_non_newline_text<delim> -- text
+
+  any_non_inlinelike_text<delim> = (~(space inlineelstart) ~delim any_non_newline)+
 
   any_non_newline_text<delim> = (~delim any_non_newline)+
 
@@ -174,7 +180,7 @@ AsciiDoc {
   UnconstrainedItalic = "_" InlineElementOrText<"_">+ "_"
   ConstrainedItalic = "_" UnconstrainedItalic "_"
 
-  MonospaceText = "`" (~"`" any)+ "`"
+  monospace_text = "`" (~"`" any)+ "`"
   httpscheme = "https" | "http"
   url_scheme = httpscheme | "ftp" | "irc" | "mailto"
   UrlMacro = url_scheme ":" (~"[" any)+ AttributeList
