@@ -101,7 +101,7 @@ const blocksAttrsByContext = {
   abstract: { context: "abstract", type: "BlockAbstract" } as Partial<
     t.BlockAbstract
   >,
-  admonition: { context: "admonition", type: "Admonition" } as Partial<
+  admonition: { context: "admonition", type: "BlockAdmonition" } as Partial<
     t.BlockAdmonition
   >,
   listing: { context: "listing", type: "BlockListing" } as Partial<

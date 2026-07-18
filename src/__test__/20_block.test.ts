@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { toAST } from "../mod.js";
+import { toAST } from "./parser.js";
 describe("block", () => {
   test("Parse block with metadata", async ({ expect }) => {
     const input = `.Block Title

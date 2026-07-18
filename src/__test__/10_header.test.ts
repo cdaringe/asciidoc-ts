@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import { toAST } from "../mod.js";
+import { toAST } from "./parser.js";
 
 test("Parse Header (without \\n is PlainText)", async ({ expect }) => {
   const input = `= Main Header`;

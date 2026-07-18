@@ -7,6 +7,20 @@ export type ParsingNode =
   // uhhh i don't know how to categorize these Nodes yet
   | LexOnlyASTNode;
 export type LexOnlyASTNode = AttributeEntry | Terminal;
+export type SemanticValue =
+  | ParsingNode
+  | BlockAnchor
+  | BlockMetaData
+  | DescriptionListItem
+  | OrderedListItem
+  | ParagraphSegment
+  | SingleLineText
+  | TableCell
+  | TableRow
+  | UrlMacro
+  | string
+  | Record<string, unknown>
+  | SemanticValue[];
 export interface Terminal {
   content: string;
   type: "Terminal";
@@ -101,7 +115,6 @@ export type Block =
   | BlockSection
   | BlockParagraph
   | BlockList
-  | BlockOrderedList
   | BlockDescriptionList
   | BlockListing
   | BlockTable
@@ -166,7 +179,7 @@ export interface ParagraphSegment {
 }
 export interface BlockList
   extends Omit<BlockBase<"dlist" | "olist" | "ulist", "simple">, "content"> {
-  content: ListItem[];
+  content: (ListItem | OrderedListItem)[];
   type: "BlockList";
   ordered: boolean;
 }
@@ -174,6 +187,9 @@ export interface ListItem {
   content: InlineElement[];
   depth: number;
   type: "ListItem";
+}
+export interface OrderedListItem extends Omit<ListItem, "type"> {
+  type: "OrderedListItem";
 }
 export interface BlockDescriptionList
   extends Omit<BlockBase<"dlist", "simple">, "content"> {

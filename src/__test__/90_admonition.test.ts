@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import { toAST } from "../mod.js";
+import { toAST } from "./parser.js";
 test("BlockAdmonition - basic", async ({ expect }) => {
   const input = `NOTE: This is an admonition.
 `;

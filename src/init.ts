@@ -1,6 +1,6 @@
 import { grammar } from "./grammar.js";
 import { semantics } from "./ast.js";
-export const verifyRules = () => {
+export const verifyRules = (semanticsToVerify = semantics) => {
   const ruleAliasRegex = /--\s+[_a-zA-Z0-9]+$/;
   const grammarRules = new Set(
     Object.entries(grammar.rules).filter(([_, it]) =>
@@ -9,7 +9,7 @@ export const verifyRules = () => {
       .map(([key, _]) => key),
   );
   const actionRules = new Set(
-    Object.keys((semantics as any)._getActionDict("toAST")),
+    Object.keys((semanticsToVerify as any)._getActionDict("toAST")),
   );
   const missingRules = [
     ...new Set([...grammarRules].filter((x) => {

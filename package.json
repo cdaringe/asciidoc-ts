@@ -3,9 +3,11 @@
   "version": "0.0.0",
   "description": "asciidoc tooling for javascript",
   "main": "dist/mod.js",
+  "types": "dist/mod.d.ts",
   "type": "module",
   "foo": "bar",
   "scripts": {
+    "build": "wireit",
     "test": "vitest run",
     "format": "wireit"
   },
@@ -14,6 +16,35 @@
     "url": "git+ssh://git@github.com/cdaringe/asciidoc-ts.git"
   },
   "wireit": {
+    "build": {
+      "dependencies": [
+        "build:grammar"
+      ]
+    },
+    "build:grammar": {
+      "command": "cp src/grammar.ohm dist/grammar.ohm",
+      "dependencies": [
+        "build:ts"
+      ],
+      "files": [
+        "src/grammar.ohm"
+      ],
+      "output": [
+        "dist/grammar.ohm"
+      ]
+    },
+    "build:ts": {
+      "command": "tsc -p tsconfig.build.json",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "tsconfig.build.json"
+      ],
+      "output": [
+        "dist/**/*.d.ts",
+        "dist/**/*.js"
+      ]
+    },
     "format:ts-sort": {
       "command": "tsx ./scripts/sort.ts"
     },
@@ -44,6 +75,7 @@
     "ohm-js": "^17.1.0"
   },
   "devDependencies": {
+    "@types/node": "22.5.5",
     "glob": "11.0.0",
     "ts-node": "10.9.2",
     "tsx": "4.19.1",

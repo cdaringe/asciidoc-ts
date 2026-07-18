@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { toAST } from "../mod.js";
+import { toAST } from "./parser.js";
 
 describe("Inline Elements", () => {
   test("Sequential InlineElements", async ({ expect }) => {

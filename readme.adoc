@@ -11,10 +11,9 @@ WARNING: The grammar does not follow asciidoc perfectly, but gets you 99% there.
 
 == ToDo
 
-* `.toAST()` is not adequately typed. Update to never call it. Instead, call helpers that assert over the return type of toAST()... and only use those!
 * Improve AST types for well-known attributes. Many position attributes correlate to concrete behavior, but aren't modeled. For example `[quote, Albert Einstein]` are just two generic `Attribute`s, but the second could be a `AttributeAuthor` or similar.
 * Detect float context when when BlockHeader* is parsed
-
+* Parsed AST => CST
 
 == Known Issues
 

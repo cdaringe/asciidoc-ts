@@ -1,5 +1,5 @@
 import { describe, test } from "vitest";
-import { toAST } from "../mod.js";
+import { toAST } from "./parser.js";
 
 describe("cross-reference", () => {
   test("basic ref", async ({ expect }) => {

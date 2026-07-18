@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import { toAST } from "../mod.js";
+import { toAST } from "./parser.js";
 test("block quote ___ delimiting", async ({ expect }) => {
   const input = `[quote, Albert Einstein]
 ____
