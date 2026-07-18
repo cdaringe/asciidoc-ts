@@ -66,6 +66,49 @@ describe("List", () => {
       }
     `);
   });
+  test("Unordered List with URL", async ({ expect }) => {
+    const result = toAST("* before_text https://foo.bar[baz] after_text");
+
+    expect(result.value).toMatchInlineSnapshot(`
+      {
+        "blocks": [
+          {
+            "content": [
+              {
+                "content": [
+                  {
+                    "content": "before_text",
+                    "type": "PlainText",
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "name": "baz",
+                        "type": "AttributeEntry",
+                      },
+                    ],
+                    "scheme": "https",
+                    "type": "UrlMacro",
+                    "url": "https://foo.bar",
+                  },
+                  {
+                    "content": "after_text",
+                    "type": "PlainText",
+                  },
+                ],
+                "depth": 0,
+                "type": "ListItem",
+              },
+            ],
+            "context": "ulist",
+            "ordered": false,
+            "type": "BlockList",
+          },
+        ],
+        "type": "Document",
+      }
+    `);
+  });
   test("Ordered List", async ({ expect }) => {
     const input = `
 1. First item

@@ -90,8 +90,19 @@ NOTE: This is an admonition.
             {
               "content": [
                 {
-                  "content": "List item with URL https://foo.bar[baz]",
+                  "content": "List item with URL",
                   "type": "PlainText",
+                },
+                {
+                  "attributes": [
+                    {
+                      "name": "baz",
+                      "type": "AttributeEntry",
+                    },
+                  ],
+                  "scheme": "https",
+                  "type": "UrlMacro",
+                  "url": "https://foo.bar",
                 },
               ],
               "depth": 0,
@@ -188,5 +199,4 @@ NOTE: This is an admonition.
       "type": "Document",
     }
   `);
-  throw new Error("list item with url in it is biffed");
 });

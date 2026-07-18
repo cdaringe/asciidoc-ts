@@ -1,3 +1,4 @@
+// https://ohmjs.org/docs/syntax-reference
 AsciiDoc {
   Document = DocElement* EndOfFile
   DocElement =
@@ -73,6 +74,7 @@ AsciiDoc {
       | "link:"  // Link start
       | "image:"  // Image start
       | "footnote:"  // Footnote start
+      | url_macro_start  // URL macro start
       | "+++"  // Inline passthrough start
       | "~"   // Subscript start
       | "^"   // Superscript start
@@ -183,6 +185,7 @@ AsciiDoc {
   monospace_text = "`" (~"`" any)+ "`"
   httpscheme = "https" | "http"
   url_scheme = httpscheme | "ftp" | "irc" | "mailto"
+  url_macro_start = url_scheme ":"
   UrlMacro = url_scheme ":" (~"[" any)+ AttributeList
 
   Link = "link:" url "[" link_text "]"
