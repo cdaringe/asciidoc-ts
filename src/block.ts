@@ -23,9 +23,24 @@ export const toDerivedBlockType = <B extends Partial<t.Block>>(block: B): B => {
   return pipe(
     deriveBlockDefaultContext,
     (it) => deriveBlockMasquerading(it, defaultStyle),
+    deriveFloatingTitleContext,
     (it) => maybeBlockPromoteToCode(it),
     deriveWellKnownAttributes,
   )(block);
+};
+
+const deriveFloatingTitleContext = <B extends Partial<t.Block>>(
+  block: B,
+): B => {
+  const style = block.metadata?.attributes?.[0]?.name;
+  if (
+    block.type === "Header" &&
+    block.context === "section" &&
+    (style === "discrete" || style === "float")
+  ) {
+    return { ...block, context: "floating_title" } as B;
+  }
+  return block;
 };
 
 const shorthandType = (

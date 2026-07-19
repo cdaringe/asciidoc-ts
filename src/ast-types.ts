@@ -115,6 +115,7 @@ export type Block =
   | BlockPartintro
   | BlockSectionSetext
   | BlockSection
+  | BlockFloatingTitle
   | BlockParagraph
   | BlockList
   | BlockDescriptionList
@@ -149,6 +150,16 @@ export interface BlockSectionSetext extends BlockBase<"section", "empty"> {
  * @warn Counter to the documentation, we model the section as simple vs compound, and the header is itself the content.
  */
 export interface BlockSection extends BlockBase<"section", "empty"> {
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  type: "Header";
+}
+/**
+ * A discrete heading, historically called a floating title.
+ *
+ * @see https://docs.asciidoctor.org/asciidoc/latest/blocks/discrete-headings/
+ */
+export interface BlockFloatingTitle
+  extends BlockBase<"floating_title", "empty"> {
   level: 1 | 2 | 3 | 4 | 5 | 6;
   type: "Header";
 }
