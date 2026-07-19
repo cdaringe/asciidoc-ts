@@ -1,7 +1,7 @@
 import { test } from "vitest";
 import { toAST } from "./parser.js";
 test("block quote ___ delimiting", async ({ expect }) => {
-  const input = `[quote, Albert Einstein]
+  const input = `[quote, Albert Einstein, Relativity]
 ____
 The important thing is not to stop questioning. Curiosity has its own reason for existing.
 ____
@@ -21,11 +21,15 @@ ____
         "attributes": [
           {
             "name": "quote",
-            "type": "AttributeEntry",
+            "type": "AttributeStyle",
           },
           {
             "name": "Albert Einstein",
-            "type": "AttributeEntry",
+            "type": "AttributeAuthor",
+          },
+          {
+            "name": "Relativity",
+            "type": "AttributeCitation",
           },
         ],
         "title": [],

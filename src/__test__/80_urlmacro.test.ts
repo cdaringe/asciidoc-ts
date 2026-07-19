@@ -8,11 +8,11 @@ test("Parse URL Macro", async ({ expect }) => {
       "attributes": [
         {
           "name": "foo",
-          "type": "AttributeEntry",
+          "type": "AttributePositional",
         },
         {
           "name": "bar",
-          "type": "AttributeEntry",
+          "type": "AttributePositional",
         },
       ],
       "scheme": "https",

@@ -24,11 +24,11 @@ baz
               "attributes": [
                 {
                   "name": "foo",
-                  "type": "AttributeEntry",
+                  "type": "AttributeStyle",
                 },
                 {
                   "name": "bar",
-                  "type": "AttributeEntry",
+                  "type": "AttributePositional",
                 },
               ],
               "title": [],
@@ -81,11 +81,11 @@ ok
               "attributes": [
                 {
                   "name": "foo",
-                  "type": "AttributeEntry",
+                  "type": "AttributeStyle",
                 },
                 {
                   "name": "bar",
-                  "type": "AttributeEntry",
+                  "type": "AttributePositional",
                 },
               ],
               "title": [],
@@ -132,11 +132,11 @@ bar();
               "attributes": [
                 {
                   "name": "source",
-                  "type": "AttributeEntry",
+                  "type": "AttributeStyle",
                 },
                 {
                   "name": "js",
-                  "type": "AttributeEntry",
+                  "type": "AttributeLanguage",
                 },
               ],
               "title": [],

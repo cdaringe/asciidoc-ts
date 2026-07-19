@@ -24,7 +24,46 @@ export const toDerivedBlockType = <B extends Partial<t.Block>>(block: B): B => {
     deriveBlockDefaultContext,
     (it) => deriveBlockMasquerading(it, defaultStyle),
     (it) => maybeBlockPromoteToCode(it),
+    deriveWellKnownAttributes,
   )(block);
+};
+
+const shorthandType = (
+  name: string,
+):
+  | t.AttributeId["type"]
+  | t.AttributeOption["type"]
+  | t.AttributeRole["type"]
+  | undefined => {
+  if (name.startsWith("#")) return "AttributeId";
+  if (name.startsWith(".")) return "AttributeRole";
+  if (name.startsWith("%")) return "AttributeOption";
+  return undefined;
+};
+
+const deriveWellKnownAttributes = <B extends Partial<t.Block>>(block: B): B => {
+  const attributes = block.metadata?.attributes;
+  if (!attributes) return block;
+  let position = 0;
+  const specialized = attributes.map((attribute): t.Attribute => {
+    if (attribute.type !== "AttributePositional") return attribute;
+    position += 1;
+    const shorthand = shorthandType(attribute.name);
+    if (shorthand) return { ...attribute, type: shorthand } as t.Attribute;
+    if (position === 1) return { ...attribute, type: "AttributeStyle" };
+    if (block.context === "quote" || block.context === "verse") {
+      if (position === 2) return { ...attribute, type: "AttributeAuthor" };
+      if (position === 3) return { ...attribute, type: "AttributeCitation" };
+    }
+    if (block.type === "BlockSource" && position === 2) {
+      return { ...attribute, type: "AttributeLanguage" };
+    }
+    return attribute;
+  });
+  return {
+    ...block,
+    metadata: { ...block.metadata, attributes: specialized },
+  } as B;
 };
 const contextByMarker: Record<string, t.BlockContext> = {
   "_": "quote",

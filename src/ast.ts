@@ -50,8 +50,8 @@ export const createSemantics = (guards?: ASTGuards) => {
     AttributePositional(content) {
       return {
         name: content.sourceString,
-        type: "AttributeEntry",
-      } satisfies t.AttributeEntry;
+        type: "AttributePositional",
+      } satisfies t.AttributePositional;
     },
     AttributeReference(_, name, __) {
       return {
@@ -152,7 +152,7 @@ export const createSemantics = (guards?: ASTGuards) => {
       const title = readAST<any>(titleNode, "semantic");
       return {
         ...truthyValuesOrEmptyPojo({ title }),
-        attributes: readAST<t.AttributeEntry[]>(attributes, "array"),
+        attributes: readAST<t.Attribute[]>(attributes, "array"),
       } satisfies t.BlockMetaData;
     },
     BlockParagraph(content) {

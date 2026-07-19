@@ -21,11 +21,11 @@ This is a paragraph with metadata.`.trimStart();
               "attributes": [
                 {
                   "name": "#id",
-                  "type": "AttributeEntry",
+                  "type": "AttributeId",
                 },
                 {
                   "name": ".role",
-                  "type": "AttributeEntry",
+                  "type": "AttributeRole",
                 },
               ],
               "title": {
@@ -122,11 +122,11 @@ function hello() {${" "}
           "attributes": [
             {
               "name": "source",
-              "type": "AttributeEntry",
+              "type": "AttributeStyle",
             },
             {
               "name": "javascript",
-              "type": "AttributeEntry",
+              "type": "AttributeLanguage",
             },
           ],
           "title": [],

@@ -11,7 +11,6 @@ WARNING: The grammar does not follow asciidoc perfectly, but gets you 99% there.
 
 == ToDo
 
-* Improve AST types for well-known attributes. Many position attributes correlate to concrete behavior, but aren't modeled. For example `[quote, Albert Einstein]` are just two generic `Attribute`s, but the second could be a `AttributeAuthor` or similar.
 * Detect float context when when BlockHeader* is parsed
 * Parsed AST => CST
 

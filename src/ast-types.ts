@@ -6,7 +6,7 @@ export type ParsingNode =
   | ASTNode
   // uhhh i don't know how to categorize these Nodes yet
   | LexOnlyASTNode;
-export type LexOnlyASTNode = AttributeEntry | Terminal;
+export type LexOnlyASTNode = Attribute | Terminal;
 export type SemanticValue =
   | ParsingNode
   | BlockAnchor
@@ -104,13 +104,15 @@ export interface BlockBase<C extends BlockContext, M extends BlockModel> {
  * https://docs.asciidoctor.org/asciidoc/latest/blocks/
  */
 export interface BlockMetaData {
-  attributes?: AttributeEntry[];
+  attributes?: Attribute[];
   id?: string;
   options?: string[];
   roles?: string[];
   title?: string;
 }
 export type Block =
+  | BlockAbstract
+  | BlockPartintro
   | BlockSectionSetext
   | BlockSection
   | BlockParagraph
@@ -126,6 +128,7 @@ export type Block =
   | BlankLine
   | BlockPassthrough
   | BlockQuote
+  | BlockVerse
   | BlockSidebar
   | BlockComment
   | BlockLiteral;
@@ -265,6 +268,48 @@ export interface AttributeEntry<Name extends string = string> {
   type: "AttributeEntry";
   value?: PlainText[];
 }
+export interface AttributePositional<Name extends string = string> {
+  name: Name;
+  type: "AttributePositional";
+}
+export interface AttributeStyle<Name extends string = string> {
+  name: Name;
+  type: "AttributeStyle";
+}
+export interface AttributeId<Name extends string = string> {
+  name: Name;
+  type: "AttributeId";
+}
+export interface AttributeRole<Name extends string = string> {
+  name: Name;
+  type: "AttributeRole";
+}
+export interface AttributeOption<Name extends string = string> {
+  name: Name;
+  type: "AttributeOption";
+}
+export interface AttributeAuthor<Name extends string = string> {
+  name: Name;
+  type: "AttributeAuthor";
+}
+export interface AttributeCitation<Name extends string = string> {
+  name: Name;
+  type: "AttributeCitation";
+}
+export interface AttributeLanguage<Name extends string = string> {
+  name: Name;
+  type: "AttributeLanguage";
+}
+export type Attribute =
+  | AttributeEntry
+  | AttributePositional
+  | AttributeStyle
+  | AttributeId
+  | AttributeRole
+  | AttributeOption
+  | AttributeAuthor
+  | AttributeCitation
+  | AttributeLanguage;
 export interface BlockComment extends BlockBase<"comment", "verbatim"> {
   type: "BlockComment";
 }

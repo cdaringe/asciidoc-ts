@@ -97,7 +97,7 @@ NOTE: This is an admonition.
                   "attributes": [
                     {
                       "name": "baz",
-                      "type": "AttributeEntry",
+                      "type": "AttributePositional",
                     },
                   ],
                   "scheme": "https",
@@ -158,11 +158,11 @@ NOTE: This is an admonition.
             "attributes": [
               {
                 "name": "source",
-                "type": "AttributeEntry",
+                "type": "AttributeStyle",
               },
               {
                 "name": "javascript",
-                "type": "AttributeEntry",
+                "type": "AttributeLanguage",
               },
             ],
             "title": [],
@@ -175,7 +175,7 @@ NOTE: This is an admonition.
               "attributes": [
                 {
                   "name": "Visit Example",
-                  "type": "AttributeEntry",
+                  "type": "AttributePositional",
                 },
               ],
               "scheme": "https",

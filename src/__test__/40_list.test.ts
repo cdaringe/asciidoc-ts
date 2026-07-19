@@ -84,7 +84,7 @@ describe("List", () => {
                     "attributes": [
                       {
                         "name": "baz",
-                        "type": "AttributeEntry",
+                        "type": "AttributePositional",
                       },
                     ],
                     "scheme": "https",
