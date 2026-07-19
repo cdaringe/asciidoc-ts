@@ -11,8 +11,14 @@ ____
     {
       "content": [
         {
-          "content": "The important thing is not to stop questioning. Curiosity has its own reason for existing.",
-          "type": "PlainText",
+          "content": [
+            {
+              "content": "The important thing is not to stop questioning. Curiosity has its own reason for existing.",
+              "type": "PlainText",
+            },
+          ],
+          "context": "paragraph",
+          "type": "BlockParagraph",
         },
       ],
       "context": "quote",

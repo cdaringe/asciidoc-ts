@@ -272,12 +272,12 @@ export const createSemantics = (guards?: ASTGuards) => {
         type: "Document",
       } satisfies t.Document;
     }, // ("," (~">>" any)*)
-    DocumentAttribute(_open, key, _close, valueNode, _nl) {
+    DocumentAttribute(_open, _leading, key, _trailing, _close, valueNode, _nl) {
       // ":" document_attribute_key ":" DocumentAttributeValue
       const value = readAST<any>(valueNode, "semantic");
       return {
         value,
-        name: key.sourceString,
+        name: key.sourceString.trim(),
         type: "AttributeEntry",
       } satisfies t.AttributeEntry;
     },
@@ -287,9 +287,27 @@ export const createSemantics = (guards?: ASTGuards) => {
     FenceDot: defaultToAST,
     FenceEq: defaultToAST,
     FenceGeneric(delim1, _nl1, content, _nl2, _delim2) {
+      const delimiter = delim1.sourceString;
+      if (
+        delimiter === "--" ||
+        delimiter.length >= 4 && ["_", "=", "*"].includes(delimiter[0]!)
+      ) {
+        const matchResult = grammar.match(content.sourceString, "Document");
+        if (!matchResult.succeeded()) {
+          throw new Error(
+            `Unable to parse ${delimiter} compound block content: ${matchResult.message}`,
+          );
+        }
+        const document = (semantics(matchResult) as { toAST(): t.Document })
+          .toAST();
+        return {
+          content: document.blocks,
+          delimiter,
+        };
+      }
       return {
         content: readAST<any>(content, "semantic"),
-        delimiter: delim1.sourceString,
+        delimiter,
       };
     },
     FenceOpen: defaultToAST,
@@ -385,7 +403,9 @@ export const createSemantics = (guards?: ASTGuards) => {
     NonFencable: defaultToAST,
     OrderedList(items) {
       return {
-        content: normalizeDepth(readAST<t.OrderedListItem[]>(items, "array")),
+        content: normalizeDepth(
+          readAST<(t.OrderedListItem & { marker: string })[]>(items, "array"),
+        ),
         context: "olist",
         ordered: true,
         type: "BlockList",
@@ -396,13 +416,15 @@ export const createSemantics = (guards?: ASTGuards) => {
        * Decimal delimited ordered list items are a special case
        * and can only be depth 1.
        */
-      const deciDelimited = marker.sourceString.match(/(\d+)\./)?.[1];
-      const depth = deciDelimited ? 1 : marker.sourceString.length;
+      const normalizedMarker = /^(?:\d+|[A-Za-z])\./.test(marker.sourceString)
+        ? "."
+        : marker.sourceString.trim();
       return {
-        depth,
         content: readAST<any>(content, "semantic"),
+        depth: 0,
+        marker: normalizedMarker,
         type: "OrderedListItem",
-      } satisfies t.OrderedListItem;
+      } satisfies t.OrderedListItem & { marker: string };
     },
     ParagraphSegment(content, _bl, continuation) {
       // ParagraphSegment = InlineElementOrPlainText+ (BlankLine ParagraphSegment)?
@@ -459,7 +481,9 @@ export const createSemantics = (guards?: ASTGuards) => {
     },
     UnorderedList(items) {
       return {
-        content: normalizeDepth(readAST<t.ListItem[]>(items, "array")),
+        content: normalizeDepth(
+          readAST<(t.ListItem & { marker: string })[]>(items, "array"),
+        ),
         context: "ulist",
         ordered: false,
         type: "BlockList",
@@ -468,9 +492,10 @@ export const createSemantics = (guards?: ASTGuards) => {
     UnorderedListItem(marker, content, _nl) {
       return {
         content: readAST<any>(content, "semantic"),
-        depth: marker.sourceString.length,
+        depth: 0,
+        marker: marker.sourceString.trim(),
         type: "ListItem",
-      } satisfies t.ListItem;
+      } satisfies t.ListItem & { marker: string };
     },
     UrlMacro(scheme, _colon, url, attributes) {
       return {
@@ -485,20 +510,24 @@ export const createSemantics = (guards?: ASTGuards) => {
 };
 
 export interface Parser {
+  parse(input: string): Result<t.Document, MatchResult>;
+  parse(input: string, startRule: string): Result<t.SemanticValue, MatchResult>;
   semantics: ReturnType<typeof grammar.createSemantics>;
+  /** @deprecated Use `parse` instead. */
   toAST(input: string): Result<t.Document, MatchResult>;
+  /** @deprecated Use `parse` instead. */
   toAST(input: string, startRule: string): Result<t.SemanticValue, MatchResult>;
 }
 
 export const createParser = (options: { guards?: ASTGuards } = {}): Parser => {
   const semantics = createSemantics(options.guards);
   const readAST = createASTReader(options.guards);
-  function toAST(input: string): Result<t.Document, MatchResult>;
-  function toAST(
+  function parse(input: string): Result<t.Document, MatchResult>;
+  function parse(
     input: string,
     startRule: string,
   ): Result<t.SemanticValue, MatchResult>;
-  function toAST(
+  function parse(
     input: string,
     startRule?: string,
   ): Result<t.SemanticValue, MatchResult> {
@@ -512,9 +541,11 @@ export const createParser = (options: { guards?: ASTGuards } = {}): Parser => {
     }
     return { ok: false, value: matchResult };
   }
-  return { semantics, toAST } as Parser;
+  return { parse, semantics, toAST: parse } as Parser;
 };
 
 const defaultParser = createParser();
 export const semantics = defaultParser.semantics;
-export const toAST = defaultParser.toAST;
+export const parse = defaultParser.parse;
+/** @deprecated Use `parse` instead. */
+export const toAST = parse;

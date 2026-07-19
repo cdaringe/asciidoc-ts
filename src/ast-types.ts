@@ -128,6 +128,7 @@ export type Block =
   | BlockSource
   | BlankLine
   | BlockPassthrough
+  | BlockOpen
   | BlockQuote
   | BlockVerse
   | BlockSidebar
@@ -181,6 +182,9 @@ export interface BlockPartintro extends BlockBase<"partintro", "simple"> {
 export interface BlockPassthrough extends BlockBase<"pass", "verbatim"> {
   type: "BlockPassthrough";
 }
+export interface BlockOpen extends BlockBase<"open", "compound"> {
+  type: "BlockOpen";
+}
 /**
  * @see https://docs.asciidoctor.org/asciidoc/latest/verbatim/literal-blocks/
  */
@@ -225,7 +229,7 @@ export interface BlockListing extends BlockBase<"listing", "verbatim"> {
 export interface BlockSource extends BlockBase<"listing", "verbatim"> {
   type: "BlockSource";
 }
-export interface BlockQuote extends BlockBase<"quote", "simple"> {
+export interface BlockQuote extends BlockBase<"quote", "compound"> {
   type: "BlockQuote";
 }
 export interface BlockTable extends BlockBase<"table", "table"> {
@@ -253,7 +257,7 @@ export interface BlockAdmonition extends BlockBase<"admonition", "simple"> {
 /**
  * @see https://docs.asciidoctor.org/asciidoc/latest/blocks/sidebars/
  */
-export interface BlockSidebar extends BlockBase<"sidebar", "simple"> {
+export interface BlockSidebar extends BlockBase<"sidebar", "compound"> {
   type: "BlockSidebar";
 }
 /**
@@ -331,7 +335,7 @@ export interface SingleLineText {
 export interface BlankLine extends BlockBase<"blank_line", "simple"> {
   type: "BlankLine";
 }
-export interface BlockExample extends BlockBase<"example", "simple"> {
+export interface BlockExample extends BlockBase<"example", "compound"> {
   type: "BlockExample";
 }
 export type InlineElement =

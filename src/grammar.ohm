@@ -11,7 +11,7 @@ AsciiDoc {
     | doc_attr_value_multi_line -- val_wrapped
     | any_non_newline_text<end> -- val
   document_attribute_key = (~":" ~space any)+
-  DocumentAttribute = ":" document_attribute_key ":" doc_attr_value? newline?
+  DocumentAttribute = ":" space* document_attribute_key space* ":" doc_attr_value? newline?
 
   AttributeList = "[" listOf<Attribute, ","> "]"
   Attribute = AttributeNamed | AttributePositional
@@ -111,9 +111,9 @@ AsciiDoc {
 
   OrderedList = OrderedListItem+
   OrderedListItem = ol_marker ListItemContent newline?
-  ol_marker_dot = ". "
-  ol_marker_digits_dot = digits ol_marker_dot
-  ol_marker = ol_marker_digits_dot | ol_marker_dot
+  ol_marker_dot = "."+ space+
+  ol_marker_enumerated = (digits | letter) "." space+
+  ol_marker = ol_marker_enumerated | ol_marker_dot
 
   DescriptionList = DescriptionListItem+
   DescriptionListItem = description_list_term "::" description_content

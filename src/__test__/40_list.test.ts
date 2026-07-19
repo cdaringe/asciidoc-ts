@@ -138,7 +138,7 @@ describe("List", () => {
                     "type": "PlainText",
                   },
                 ],
-                "depth": 1,
+                "depth": 0,
                 "type": "OrderedListItem",
               },
               {
@@ -148,7 +148,7 @@ describe("List", () => {
                     "type": "PlainText",
                   },
                 ],
-                "depth": 1,
+                "depth": 0,
                 "type": "OrderedListItem",
               },
             ],
@@ -160,5 +160,73 @@ describe("List", () => {
         "type": "Document",
       }
     `);
+  });
+
+  test("infers levels from marker changes instead of marker length", async ({ expect }) => {
+    const input = `* Level 1
+- Level 2 using a different marker
+*** Level 3 using a non-sequential length
+- Back to level 2
+* Back to level 1`;
+
+    const result = toAST(input);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const list = result.value.blocks[0];
+    expect(list).toMatchObject({
+      content: [
+        { depth: 0 },
+        { depth: 1 },
+        { depth: 2 },
+        { depth: 1 },
+        { depth: 0 },
+      ],
+      context: "ulist",
+    });
+  });
+
+  test("parses nested ordered list markers", async ({ expect }) => {
+    const result = toAST(`. Level 1
+.. Level 2
+.... Level 3 using a non-sequential length
+.. Back to level 2
+. Back to level 1`);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.blocks[0]).toMatchObject({
+      content: [
+        { depth: 0 },
+        { depth: 1 },
+        { depth: 2 },
+        { depth: 1 },
+        { depth: 0 },
+      ],
+      context: "olist",
+    });
+  });
+
+  test("recognizes a single-letter explicit ordered marker", async ({ expect }) => {
+    const result = toAST("P. O. Box");
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.blocks[0]).toMatchObject({
+      content: [{ depth: 0, type: "OrderedListItem" }],
+      context: "olist",
+    });
+  });
+
+  test("an empty attribute reference escapes an ordered list marker", async ({ expect }) => {
+    const result = toAST("P.{empty}O. Box");
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.blocks[0]).toEqual({
+      content: [{ content: "P.{empty}O. Box", type: "PlainText" }],
+      context: "paragraph",
+      type: "BlockParagraph",
+    });
   });
 });

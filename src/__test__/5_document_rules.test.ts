@@ -55,4 +55,14 @@ bro
     }
   `);
   });
+  test("permits whitespace inside attribute fences", async ({ expect }) => {
+    expect(toAST(":  title  : value", "DocumentAttribute")).toEqual({
+      ok: true,
+      value: {
+        name: "title",
+        type: "AttributeEntry",
+        value: [{ content: "value", type: "PlainText" }],
+      },
+    });
+  });
 });

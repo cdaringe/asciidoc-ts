@@ -75,7 +75,7 @@ ok
                 "type": "PlainText",
               },
             ],
-            "context": "foo",
+            "context": "listing",
             "delimiter": "----",
             "metadata": {
               "attributes": [
@@ -147,5 +147,34 @@ bar();
         "type": "Document",
       }
     `);
+  });
+  test("literal container masquerades as a listing", async ({ expect }) => {
+    const result = toAST("[listing]\n....\na > b\n....");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.blocks[0]).toMatchObject({
+      context: "listing",
+      delimiter: "....",
+      type: "BlockListing",
+    });
+  });
+  test("unknown styles do not replace the container context", async ({ expect }) => {
+    const result = toAST("[custom]\n----\ncontent\n----");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.blocks[0]).toMatchObject({
+      context: "listing",
+      type: "BlockListing",
+    });
+  });
+  test("admonition style masquerades an example block", async ({ expect }) => {
+    const result = toAST("[NOTE]\n====\nRemember the milk.\n====");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.blocks[0]).toMatchObject({
+      admonitionType: "NOTE",
+      context: "admonition",
+      type: "BlockAdmonition",
+    });
   });
 });

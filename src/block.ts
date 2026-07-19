@@ -99,13 +99,19 @@ const blockTypeByMarker: Record<string, t.Block["type"]> = {
   "=": "BlockExample",
 } as const;
 const deriveBlockDefaultContext = <B extends Partial<t.Block>>(block: B): B => {
+  if (block.delimiter === "--") {
+    return {
+      ...block,
+      context: "open",
+      type: "BlockOpen",
+    } as B;
+  }
   const delimiterChar = block.delimiter?.slice(
     0,
     1,
   ) as keyof typeof contextByMarker;
   const defaultContext = contextByMarker[delimiterChar];
   const defaultBlockType = blockTypeByMarker[delimiterChar];
-  const blockStyle = block.metadata?.attributes?.[0]?.name;
   if (!defaultContext || !defaultBlockType) {
     if (!block.context) {
       throw new Error(`impossible case: missing context for block}`);
@@ -121,11 +127,6 @@ const deriveBlockDefaultContext = <B extends Partial<t.Block>>(block: B): B => {
     blk.context = defaultContext;
     blk.type = defaultBlockType;
   }
-  const isUsingBlockStyleMasquerade = blockStyle &&
-    blockStyle !== blk.context && blockStyle !== defaultContext;
-  if (isUsingBlockStyleMasquerade) {
-    blk.context = blockStyle as t.BlockContext;
-  }
   return block;
 };
 /**
@@ -138,6 +139,10 @@ const masqueradingFromTo = {
   open: [
     "abstract",
     "admonition",
+    "comment",
+    "example",
+    "listing",
+    "literal",
     "partintro",
     "pass",
     "quote",
@@ -147,6 +152,13 @@ const masqueradingFromTo = {
   pass: ["stem", "latexmath", "asciimath"],
   quote: ["verse"],
 };
+const admonitionStyles = [
+  "CAUTION",
+  "IMPORTANT",
+  "NOTE",
+  "TIP",
+  "WARNING",
+] as const;
 /**
  * This is a mapping of block types to their attributes, used
  * strictly for the purpose of masquerading.
@@ -164,6 +176,7 @@ const blocksAttrsByContext = {
   literal: { context: "literal", type: "BlockLiteral" } as Partial<
     t.BlockLiteral
   >,
+  open: { context: "open", type: "BlockOpen" } as Partial<t.BlockOpen>,
   partintro: { context: "partintro", type: "BlockPartintro" } as Partial<
     t.BlockPartintro
   >,
@@ -186,13 +199,28 @@ const deriveBlockMasquerading = <B extends Partial<t.BlockStructure>>(
   if (!defaultStyle) {
     return block;
   }
+  if (
+    admonitionStyles.includes(
+      defaultStyle as typeof admonitionStyles[number],
+    ) &&
+    block.context && ["example", "open", "paragraph"].includes(block.context)
+  ) {
+    return {
+      ...block,
+      admonitionType: defaultStyle,
+      context: "admonition",
+      type: "BlockAdmonition",
+    } as B;
+  }
+  const styleContext = defaultStyle === "source" ? "listing" : defaultStyle;
+  const sourceContext = block.context === "paragraph" ? "open" : block.context;
   const allowed =
-    masqueradingFromTo[block.context as keyof typeof masqueradingFromTo];
+    masqueradingFromTo[sourceContext as keyof typeof masqueradingFromTo];
   if (!allowed) {
     return block;
   }
-  const nextAttrs = blocksAttrsByContext[defaultStyle as t.BlockContext];
-  if (allowed.includes(defaultStyle) && nextAttrs) {
+  const nextAttrs = blocksAttrsByContext[styleContext as t.BlockContext];
+  if (allowed.includes(styleContext) && nextAttrs) {
     return {
       ...block,
       ...nextAttrs,

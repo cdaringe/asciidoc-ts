@@ -1,25 +1,52 @@
 = asciidoc
 
-Grammar, parser, printer for https://docs.asciidoctor.org/[asciidoc].
-
-WARNING: The grammar does not follow asciidoc perfectly, but gets you 99% there.
+Grammar and typed AST parser for https://docs.asciidoctor.org/[AsciiDoc].
 
 == Overview
 
-* An asciidoc is a a collection of top-level https://docs.asciidoctor.org[attributes] and blocks.
+* An AsciiDoc document is a collection of top-level https://docs.asciidoctor.org[attributes] and blocks.
 * The https://docs.asciidoctor.org/asciidoc/latest/blocks/#content-model[content model] is generally respected and modeled in the AST
 
-== ToDo
+== Usage
 
-* Parsed AST => CST
+Parse a complete document with `parse`. The parser returns a discriminated result instead of throwing for invalid input.
 
-== Known Issues
+[source,ts]
+----
+import { parse } from "asciidoc";
 
-* Compound blocks
-* List levels. No fancy list marker switching yields nesting behavior changes.
-* Escaped list marker: https://docs.asciidoctor.org/asciidoc/latest/lists/ordered/#escaping-the-list-marker
-* block masquerading https://docs.asciidoctor.org/asciidoc/latest/blocks/masquerading/
-* Non-default fence lengths (e.g. 5 char `=====` fences for an BlockExample)
-* Document attributes are less permissive w.r.t. spaces within the `:` `:attr-fences`. No whitespace is allowed.
-* This lib doesn't produce a CST--it produces an AST. It probably _should_ produce a CST, which would be more useful for stable round-tripping.
-** We currently use extensive use of Syntactic vs Lexical rules. To make a CST viable, we need to switch to a more lexical approach, and use more refined AST nodes to capture the lexed structure.
+const result = parse(`= Document title
+
+An opening paragraph with *bold text*.
+
+* First item
+* Second item`);
+
+if (!result.ok) {
+  throw new Error(result.value.message);
+}
+
+for (const block of result.value.blocks) {
+  console.log(block.type, block.context);
+}
+----
+
+On success, `value` is a typed `Document` whose `blocks` contain hydrated nodes such as `Header`, `BlockParagraph`, `BlockList`, and `BlockSource`. Inline markup is represented by typed nodes inside each block's `content`.
+
+To parse a grammar fragment instead of a complete document, pass an Ohm start rule as the second argument:
+
+[source,ts]
+----
+const header = parse("== Section title", "Header");
+const block = parse("NOTE: Remember the milk.", "Block");
+----
+
+Use `createParser` when you need an isolated parser instance or runtime AST guards:
+
+[source,ts]
+----
+import { createParser } from "asciidoc";
+
+const parser = createParser();
+const result = parser.parse("A paragraph.");
+----
