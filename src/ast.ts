@@ -125,16 +125,10 @@ export const createSemantics = (guards?: ASTGuards) => {
     },
     BlockImage(_img, url, _open, alt, _comma, dims, _close) {
       return {
-        ...this.InlineImage(
-          _img,
-          url,
-          _open,
-          alt,
-          _comma,
-          dims,
-          _close,
-        ) as t.InlineImage,
+        ...readAST<Record<string, unknown>>(dims, "record"),
+        alt: alt.sourceString,
         type: "BlockImage",
+        url: url.sourceString,
       } satisfies t.BlockImage;
     },
     BlockList: defaultToAST,
@@ -333,12 +327,8 @@ export const createSemantics = (guards?: ASTGuards) => {
     },
     HeaderContent: defaultToAST,
     ImageDims(width, _comma, height) {
-      const widthNum = width.sourceString
-        ? parseInt(width.sourceString)
-        : undefined;
-      const heightNum = height.sourceString
-        ? parseInt(height.sourceString)
-        : undefined;
+      const widthNum = width.sourceString ? parseInt(width.sourceString) : undefined;
+      const heightNum = height.sourceString ? parseInt(height.sourceString) : undefined;
       return {
         ...(widthNum ? { width: widthNum } : undefined),
         ...(heightNum ? { height: heightNum } : undefined),
@@ -416,9 +406,7 @@ export const createSemantics = (guards?: ASTGuards) => {
        * Decimal delimited ordered list items are a special case
        * and can only be depth 1.
        */
-      const normalizedMarker = /^(?:\d+|[A-Za-z])\./.test(marker.sourceString)
-        ? "."
-        : marker.sourceString.trim();
+      const normalizedMarker = /^(?:\d+|[A-Za-z])\./.test(marker.sourceString) ? "." : marker.sourceString.trim();
       return {
         content: readAST<any>(content, "semantic"),
         depth: 0,

@@ -50,3 +50,26 @@ import { createParser } from "asciidoc";
 const parser = createParser();
 const result = parser.parse("A paragraph.");
 ----
+
+== Printing
+
+Use `print` to serialize any `SemanticValue` back to AsciiDoc. Complete documents parsed by this package can be parsed and printed without changing their source:
+
+[source,ts]
+----
+import { parse, print } from "asciidoc";
+
+const source = `= Document title
+
+A paragraph with *bold text*.
+`;
+const result = parse(source);
+
+if (!result.ok) {
+  throw new Error(result.value.message);
+}
+
+console.log(print(result.value) === source); // true
+----
+
+`print` also accepts individual blocks, inline nodes, strings, arrays, and other grammar-fragment values returned by `parse(source, startRule)`.
