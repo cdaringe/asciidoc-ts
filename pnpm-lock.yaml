@@ -16,14 +16,14 @@ importers:
         version: 17.1.0
     devDependencies:
       '@types/node':
-        specifier: 22.5.5
-        version: 22.5.5
+        specifier: 22.20.1
+        version: 22.20.1
       glob:
         specifier: 11.0.0
         version: 11.0.0
       ts-node:
         specifier: 10.9.2
-        version: 10.9.2(@types/node@22.5.5)(typescript@5.6.2)
+        version: 10.9.2(@types/node@22.20.1)(typescript@5.6.2)
       tsx:
         specifier: 4.19.1
         version: 4.19.1
@@ -32,7 +32,7 @@ importers:
         version: 5.6.2
       vitest:
         specifier: 2.1.1
-        version: 2.1.1(@types/node@22.5.5)
+        version: 2.1.1(@types/node@22.20.1)
       wireit:
         specifier: 0.14.9
         version: 0.14.9
@@ -390,46 +390,55 @@ packages:
     resolution: {integrity: sha512-9pxQJSPwFsVi0ttOmqLY4JJ9pg9t1gKhK0JDbV1yUEETSx55fdyCjt39eBQ54OQCzAF0nVGO6LfEH1KnCPvelA==}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.22.0':
     resolution: {integrity: sha512-YJ5Ku5BmNJZb58A4qSEo3JlIG4d3G2lWyBi13ABlXzO41SsdnUKi3HQHe83VpwBVG4jHFTW65jOQb8qyoR+qzg==}
     cpu: [arm]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.22.0':
     resolution: {integrity: sha512-U4G4u7f+QCqHlVg1Nlx+qapZy+QoG+NV6ux+upo/T7arNGwKvKP2kmGM4W5QTbdewWFgudQxi3kDNST9GT1/mg==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.22.0':
     resolution: {integrity: sha512-aQpNlKmx3amwkA3a5J6nlXSahE1ijl0L9KuIjVOUhfOh7uw2S4piR3mtpxpRtbnK809SBtyPsM9q15CPTsY7HQ==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-powerpc64le-gnu@4.22.0':
     resolution: {integrity: sha512-9fx6Zj/7vve/Fp4iexUFRKb5+RjLCff6YTRQl4CoDhdMfDoobWmhAxQWV3NfShMzQk1Q/iCnageFyGfqnsmeqQ==}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-gnu@4.22.0':
     resolution: {integrity: sha512-VWQiCcN7zBgZYLjndIEh5tamtnKg5TGxyZPWcN9zBtXBwfcGSZ5cHSdQZfQH/GB4uRxk0D3VYbOEe/chJhPGLQ==}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-s390x-gnu@4.22.0':
     resolution: {integrity: sha512-EHmPnPWvyYqncObwqrosb/CpH3GOjE76vWVs0g4hWsDRUVhg61hBmlVg5TPXqF+g+PvIbqkC7i3h8wbn4Gp2Fg==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.22.0':
     resolution: {integrity: sha512-tsSWy3YQzmpjDKnQ1Vcpy3p9Z+kMFbSIesCdMNgLizDWFhrLZIoN21JSq01g+MZMDFF+Y1+4zxgrlqPjid5ohg==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.22.0':
     resolution: {integrity: sha512-anr1Y11uPOQrpuU8XOikY5lH4Qu94oS6j0xrulHk3NkLDq19MlX8Ng/pVipjxBJ9a2l3+F39REZYyWQFkZ4/fw==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-win32-arm64-msvc@4.22.0':
     resolution: {integrity: sha512-7LB+Bh+Ut7cfmO0m244/asvtIGQr5pG5Rvjz/l1Rnz1kDzM02pSX9jPaS0p+90H5I1x4d1FkCew+B7MOnoatNw==}
@@ -464,8 +473,8 @@ packages:
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
 
-  '@types/node@22.5.5':
-    resolution: {integrity: sha512-Xjs4y5UPO/CLdzpgR6GirZJx36yScjh73+2NlLlkFRSoQN8B0DpfXPdZGnvVmLRLOsqDpOfTNv7D9trgGhmOIA==}
+  '@types/node@22.20.1':
+    resolution: {integrity: sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==}
 
   '@vitest/expect@2.1.1':
     resolution: {integrity: sha512-YeueunS0HiHiQxk+KEOnq/QMzlUuOzbU1Go+PgAsHvvv3tUkJPm9xWt+6ITNTlzsMXUjmgm5T+U7KBPK2qQV6w==}
@@ -660,6 +669,7 @@ packages:
   glob@11.0.0:
     resolution: {integrity: sha512-9UiX/Bl6J2yaBbxKoEBRm4Cipxgok8kQYcOPEhScPwebu2I0HoQOuYdIO6S3hLuWoZgpDpwQZMzTFxgpkyT76g==}
     engines: {node: 20 || >=22}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   graceful-fs@4.2.11:
@@ -891,8 +901,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  undici-types@6.19.8:
-    resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
   v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
@@ -1239,9 +1249,9 @@ snapshots:
 
   '@types/estree@1.0.6': {}
 
-  '@types/node@22.5.5':
+  '@types/node@22.20.1':
     dependencies:
-      undici-types: 6.19.8
+      undici-types: 6.21.0
 
   '@vitest/expect@2.1.1':
     dependencies:
@@ -1250,13 +1260,13 @@ snapshots:
       chai: 5.1.1
       tinyrainbow: 1.2.0
 
-  '@vitest/mocker@2.1.1(@vitest/spy@2.1.1)(vite@5.4.6(@types/node@22.5.5))':
+  '@vitest/mocker@2.1.1(@vitest/spy@2.1.1)(vite@5.4.6(@types/node@22.20.1))':
     dependencies:
       '@vitest/spy': 2.1.1
       estree-walker: 3.0.3
       magic-string: 0.30.11
     optionalDependencies:
-      vite: 5.4.6(@types/node@22.5.5)
+      vite: 5.4.6(@types/node@22.20.1)
 
   '@vitest/pretty-format@2.1.1':
     dependencies:
@@ -1665,14 +1675,14 @@ snapshots:
     dependencies:
       is-number: 7.0.0
 
-  ts-node@10.9.2(@types/node@22.5.5)(typescript@5.6.2):
+  ts-node@10.9.2(@types/node@22.20.1)(typescript@5.6.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.11
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 22.5.5
+      '@types/node': 22.20.1
       acorn: 8.12.1
       acorn-walk: 8.3.4
       arg: 4.1.3
@@ -1692,16 +1702,16 @@ snapshots:
 
   typescript@5.6.2: {}
 
-  undici-types@6.19.8: {}
+  undici-types@6.21.0: {}
 
   v8-compile-cache-lib@3.0.1: {}
 
-  vite-node@2.1.1(@types/node@22.5.5):
+  vite-node@2.1.1(@types/node@22.20.1):
     dependencies:
       cac: 6.7.14
       debug: 4.3.7
       pathe: 1.1.2
-      vite: 5.4.6(@types/node@22.5.5)
+      vite: 5.4.6(@types/node@22.20.1)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -1713,19 +1723,19 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.4.6(@types/node@22.5.5):
+  vite@5.4.6(@types/node@22.20.1):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.4.47
       rollup: 4.22.0
     optionalDependencies:
-      '@types/node': 22.5.5
+      '@types/node': 22.20.1
       fsevents: 2.3.3
 
-  vitest@2.1.1(@types/node@22.5.5):
+  vitest@2.1.1(@types/node@22.20.1):
     dependencies:
       '@vitest/expect': 2.1.1
-      '@vitest/mocker': 2.1.1(@vitest/spy@2.1.1)(vite@5.4.6(@types/node@22.5.5))
+      '@vitest/mocker': 2.1.1(@vitest/spy@2.1.1)(vite@5.4.6(@types/node@22.20.1))
       '@vitest/pretty-format': 2.1.1
       '@vitest/runner': 2.1.1
       '@vitest/snapshot': 2.1.1
@@ -1740,11 +1750,11 @@ snapshots:
       tinyexec: 0.3.0
       tinypool: 1.0.1
       tinyrainbow: 1.2.0
-      vite: 5.4.6(@types/node@22.5.5)
-      vite-node: 2.1.1(@types/node@22.5.5)
+      vite: 5.4.6(@types/node@22.20.1)
+      vite-node: 2.1.1(@types/node@22.20.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 22.5.5
+      '@types/node': 22.20.1
     transitivePeerDependencies:
       - less
       - lightningcss
